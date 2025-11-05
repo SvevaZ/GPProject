@@ -1,16 +1,108 @@
 #--------------------------------------------------------
 #              ZIPRA - ZIP Raster Analysis              #
 #--------------------------------------------------------
+import os
+import zipfile
+from osgeo import gdal
 
+#Estrazione bande di interesse dell’utente: 
 
-#Estrazione bande di interesse dell’utente: 1 standard e una personalizzata 
-# Input(zip, lista bande opzionale) Output (tiff file con una banda su ogni layer)
+def Band_estraction(zip_file, band_list=None):
+    ''' This function produces a GeoTIFF file containing the selected bands from Sentinel 2 .SAFE file.
+        If no bands are provided, it extracts the bands: B02, B03, B04, B08, B12, SCL by default.
 
-#def Band_estraction_standard(zip_file):
-#    return tiff_file
+        INPUTS:
+        - zip_file: The path to the Sentinel 2 zip file, or directly to the .SAFE folder.
+        - band_list: The list of band names to extract (optional). The list should contain valid names separated by commas, the list of all the available and is:
+            ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", 
+            "B8A", "B09", "B11", "B12", "SCL"]
 
-#def Band_estraction(zip_file, band_list):
-#    return tiff_file
+        OUTPUTS:
+        - A GeoTIFF file containing the extracted bands.
+        - The list of bands that were extracted in the correct order.
+    '''
+
+    Band = {
+        "B01": "R60m", "B02": "R10m", "B03": "R10m", "B04": "R10m", 
+        "B05": "R20m", "B06": "R20m", "B07": "R20m", "B08": "R10m", 
+        "B8A": "R20m", "B09": "R60m", "B11": "R20m", "B12": "R20m", 
+        "SCL": "R20m"}
+    # If the user does not provide a band list we use these default bands
+    if band_list is None:
+        band_list = ["B02", "B03", "B04", "B08", "B12", "SCL"]
+    else: 
+        # Check if the bands provided by the user are valid
+        for band in band_list:
+            if band not in Band.keys():
+                raise ValueError(f"Band {band} is not valid. Please choose from {list(Band.keys())}.")
+    
+    root=os.path.dirname(zip_file)
+    # Search if the zip file exists in the path provided by the user
+    if not os.path.exists(zip_file):
+        raise FileNotFoundError(f"File is not found at this path: {zip_file}")
+    if zip_file.endswith('.zip'):
+        # Decompresse the zip file
+        try:
+            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                zip_ref.extractall(path=root)    
+            print("File ZIP decompressed successfully.")
+            safe_file = zip_file.replace('.zip', '')
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+    # Check if the file is already a SAFE file
+    elif zip_file.endswith('.SAFE'):
+        safe_file = zip_file
+    else:
+        raise ValueError("The provided file is neither a .zip nor a .SAFE file.")
+
+    # The SAFE file has a fixed structure, so we can navigate through its folders to find the bands
+    Band_folder = os.path.join(safe_file, "GRANULE")
+    Image_name= os.listdir(Band_folder)[0]
+    Band_folder = os.path.join(Band_folder, Image_name, "IMG_DATA")
+    print("band folder:", Band_folder)
+    Band_final_path=[]
+
+    for band in band_list:
+         # According to the band resolution, they are stored in different folders
+        band_resolution = Band[band]
+        band_path = os.path.join(Band_folder, band_resolution)
+        
+        # Search for the band file in the corresponding folder
+        for file in os.listdir(band_path):
+            if band in file:
+                band_file_path = os.path.join(band_path, file)
+                Band_final_path.append(band_file_path)
+                print(f"Band {band} found at {band_file_path}")
+                break
+    print("A total of ", len(Band_final_path), " out of ", len(band_list), " bands have been found.")
+    
+    #VRT path
+    temp_file = os.path.join(root, "temporal.vrt")
+    final_file = os.path.join(root, "Bands_extracted.tif")
+    # Build virtual raster keeping bands separate
+    try:
+        vrt_options = gdal.BuildVRTOptions(resampleAlg=gdal.GRIORA_NearestNeighbour, separate=True)
+        gdal.BuildVRT(temp_file, Band_final_path, options=vrt_options)
+        print("VRT created succesfully")
+    except Exception as e:
+        print(f"Error creating VRT with gdal.BuildVRT: {e}")
+
+    # Resample to 10m and save as GeoTIFF
+    try:
+        warp_options = gdal.WarpOptions(
+            format='GTiff', 
+            xRes=10.0, 
+            yRes=10.0,
+            resampleAlg=gdal.GRA_CubicSpline
+        )
+        gdal.Warp(final_file, temp_file, options=warp_options)
+        print(f"File resampled and saved as GeoTIFF at {final_file}")
+        os.remove(temp_file)
+    except Exception as e:
+        print("Error during resampling:", e)
+
+    return final_file, band_list
 
 #Indici ndvi - nbr - ndwi 
 # Input(tiff, lista indici da aggiungere) Output (tiff file con nuovi layer per ogni indice)
