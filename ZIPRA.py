@@ -3,7 +3,10 @@
 #--------------------------------------------------------
 import os
 import zipfile
+import rasterio
 from osgeo import gdal
+from rasterio import mask
+
 
 #Estrazione bande di interesse dell’utente: 
 
@@ -115,7 +118,16 @@ def Band_estraction(zip_file, band_list=None):
 
 # Consideration: the class list is unique for each pixel, no possibility of overlapping classes
 def Area_calculation(tiff_file, class_list):
-    
+    ''' This function calculates the area of the specified classes in a GeoTIFF file.
+
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - class_list: A list of class values for which to calculate the area.
+
+        OUTPUTS:
+        - The total area (in square meters) occupied by the specified classes.
+    '''
+
     # Check if it's a list, also to have just 1 value as a list
     if not isinstance(class_list, list):
         try:
@@ -124,7 +136,7 @@ def Area_calculation(tiff_file, class_list):
             print("Class list must be an integer or a list of integers.")
 
     with rasterio.open(tiff_file) as src:
-        band = src.read(1)  # Read first band
+        band = src.read(13)  # Read band 13 (SCL)
         pixel_area = src.res[0] * src.res[1]  # Area of single pixel
 
         area_value = 0
@@ -138,13 +150,21 @@ def Area_calculation(tiff_file, class_list):
 
 # default output path is "clipped_image.tif"
 
-def Clip_AOI(tiff_file, AOI, output_path="clipped_image.tif"):
+def Clip_AOI(tiff_file, AOI, output_path="../DATA/clipped_image.tif"):
 
-    if not Validate_AOI(AOI):
-        return
+    from shapely import wkt
+
+    # Convertion of WKT string in shapely
+    geom_obj = wkt.loads(AOI)
+
+    # Get Geojson format
+    geojson_geom = [geom_obj.__geo_interface__]
+
+    #if not Validate_AOI(AOI):
+    #    return
 
     with rasterio.open(tiff_file) as src:
-        out_image, out_transform = rasterio.mask.mask(src, AOI, crop=True)
+        out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
         out_meta = src.meta.copy()  # For copying metadata
         out_meta.update({
             "height": out_image.shape[1],
