@@ -10,7 +10,7 @@ from rasterio import mask
 
 #Estrazione bande di interesse dell’utente: 
 
-def Band_estraction(zip_file, band_list=None):
+def Band_estraction(zip_file, band_list=None, output_file=None):
     ''' This function produces a GeoTIFF file containing the selected bands from Sentinel 2 .SAFE file.
         If no bands are provided, it extracts the bands: B02, B03, B04, B08, B12, SCL by default.
 
@@ -19,6 +19,7 @@ def Band_estraction(zip_file, band_list=None):
         - band_list: The list of band names to extract (optional). The list should contain valid names separated by commas, the list of all the available and is:
             ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", 
             "B8A", "B09", "B11", "B12", "SCL"]
+        - output_file: the path of the raster output file, the path must contain also the name of the file
 
         OUTPUTS:
         - A GeoTIFF file containing the extracted bands.
@@ -82,7 +83,14 @@ def Band_estraction(zip_file, band_list=None):
     
     #VRT path
     temp_file = os.path.join(root, "temporal.vrt")
-    final_file = os.path.join(root, "Bands_extracted.tif")
+    if output_file is None:
+        final_file = os.path.join(root, f"{Image_name}.tif")
+    elif output_file.endswith('.tif'): 
+        final_file=output_file
+    else:
+        final_file = os.path.join(root, f"{Image_name}.tif")
+        print("The output path is not valid or complete, data will be saved in ",final_file)
+
     # Build virtual raster keeping bands separate
     try:
         vrt_options = gdal.BuildVRTOptions(resampleAlg=gdal.GRIORA_NearestNeighbour, separate=True)
