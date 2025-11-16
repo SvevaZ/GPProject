@@ -125,7 +125,7 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
 # Input(tiff, classe o lista di classi) Output (numero)
 
 # Consideration: the class list is unique for each pixel, no possibility of overlapping classes
-def Area_calculation(tiff_file, class_list):
+def Area_calculation(tiff_file, class_list, SCL_band):
     ''' This function calculates the area of the specified classes in a GeoTIFF file.
 
         INPUTS:
@@ -144,7 +144,7 @@ def Area_calculation(tiff_file, class_list):
             print("Class list must be an integer or a list of integers.")
 
     with rasterio.open(tiff_file) as src:
-        band = src.read(13)  # Read band 13 (SCL)
+        band = src.read(SCL_band)  # Read band SCL
         pixel_area = src.res[0] * src.res[1]  # Area of single pixel
 
         area_value = 0
@@ -156,55 +156,81 @@ def Area_calculation(tiff_file, class_list):
 # Clip su area di interesse
 # Input(tiff, ROI) Output (tiff)  
 
+# default AOI CRS is "EPSG:4326" for map drawn geometries
+# (otherwise need to specify and add the correct CRS)
 # default output path is "clipped_image.tif"
 
-def Clip_AOI(tiff_file, AOI, output_path="../DATA/clipped_image.tif"):
+def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
+    ''' This function calculates the clip from a tiff file.
 
-    from shapely import wkt
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - AOI: The Area of Interest to clip the raster. It can be provided as:
+            - A WKT string representing the geometry.
+            - A path to a shapefile or geojson file.
+            - A GeoDataFrame containing the geometry.
+        - AOI_crs: The coordinate reference system of the AOI (default is "EPSG:4326").
+        - output_path: The path to save the clipped GeoTIFF file
 
-    # Convertion of WKT string in shapely
-    geom_obj = wkt.loads(AOI)
+        OUTPUT:
+        - The path to the clipped GeoTIFF file.
+    '''
 
-    # Get Geojson format
-    geojson_geom = [geom_obj.__geo_interface__]
-
-    #if not Validate_AOI(AOI):
-    #    return
-
-    with rasterio.open(tiff_file) as src:
-        out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
-        out_meta = src.meta.copy()  # For copying metadata
-        out_meta.update({
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform
-        })
-    # (also for the open can be put a check on the raster validity)
+    # Load AOI in GeoDataFrame
+    if isinstance(AOI, str):
+        if AOI.lower().endswith((".shp", ".geojson", ".json")):
+            aoi_gdf = gpd.read_file(AOI)  # read CRS from file
+        else:
+            geom_obj = wkt.loads(AOI)
+            aoi_gdf = gpd.GeoDataFrame(geometry=[geom_obj], crs=AOI_crs)
+    elif isinstance(AOI, gpd.GeoDataFrame):
+        aoi_gdf = AOI.copy()
+    else:
+        raise TypeError("AOI must be WKT, path to a file, or GeoDataFrame")
     
-    with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
-        clipped_tiff_file.write(out_image)
+    # Create output path
+    if not output_path:
+        base, ext = os.path.splitext(tiff_file)
+        output_path = f"{base}_CLIPPED{ext}"
+
+    try:
+        with rasterio.open(tiff_file) as src:
+            tiff_crs = src.crs
+            #print("CRS raster:", src.crs)
+            #print("Bounds raster:", src.bounds)
+            # Reproject geometry to match raster CRS if needed  
+            if AOI_crs != tiff_crs:
+                aoi_gdf = aoi_gdf.to_crs(tiff_crs)
+       
+            # Geojson format
+            geojson_geom = [aoi_gdf.geometry.iloc[0].__geo_interface__]
+            print("Intersection AOI/raster:", aoi_gdf.intersects(box(*src.bounds)).values)
+
+            if aoi_gdf.intersects(box(*src.bounds)).values[0] == False:
+                print("The AOI does not intersect the raster extent. Please, select a different AOI.")
+                return None
+            else:
+                out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
+                out_meta = src.meta.copy()  # For copying metadata
+                out_meta.update({
+                    "height": out_image.shape[1],
+                    "width": out_image.shape[2],
+                    "transform": out_transform
+                })
+
+            try:
+                with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
+                    clipped_tiff_file.write(out_image)
+            except Exception as e:
+                print("An error occurred while saving the clipped raster file:", e)
+                return None
+        
+    except Exception as e:
+        print("An error occurred while opening the raster file:", e)
+        return None
     
-     # Reopen in lecture mode
-    with rasterio.open("output.tif") as clipped_tiff_file:
-        return clipped_tiff_file.read()
-
-# Validation AOI (first draft)
-
-def Validate_AOI(AOI):
-    if not isinstance(AOI, list):
-        raise TypeError("AOI must be a list")
-    if not AOI:
-        raise ValueError("AOI is empty")
-    for geom in AOI:
-        if not isinstance(geom, dict):
-            raise TypeError("Every AOI element must be a dictionary")
-        if "type" not in geom or "coordinates" not in geom:
-            raise ValueError("Every geometry must have 'type' and 'coordinates'")
-        if geom["type"] not in ["Polygon", "MultiPolygon"]:
-            raise ValueError(f"Unsupported geometry type: {geom['type']}")
-
-    return True  
-
+    
+    return output_path
 
 # LAST TO BE ADDED:
 # Creare maschere in base alla banda SCL su richiesta dell’utente (restituire immagine mascherata)
