@@ -134,7 +134,6 @@ def Area_calculation(tiff_file, class_list, SCL_band):
 
         OUTPUTS:
         - The total area (in square meters) occupied by the specified classes.
-        - Area of the specified classes
     '''
 
     # Check if it's a list, also to have just 1 value as a list
@@ -148,13 +147,11 @@ def Area_calculation(tiff_file, class_list, SCL_band):
         band = src.read(SCL_band)  # Read band SCL
         pixel_area = src.res[0] * src.res[1]  # Area of single pixel
 
-        area_tot = 0
-        area_classes = [0]*len(class_list)
+        area_value = 0
         for class_value in class_list:
             class_pixels = (band == class_value).sum()
-            area_classes[class_list.index(class_value)] = class_pixels * pixel_area
-            area_tot += class_pixels * pixel_area
-    return [area_tot, area_classes]
+            area_value += class_pixels * pixel_area
+    return area_value
 
 # Clip su area di interesse
 # Input(tiff, ROI) Output (tiff)  
