@@ -147,11 +147,13 @@ def Area_calculation(tiff_file, class_list, SCL_band):
         band = src.read(SCL_band)  # Read band SCL
         pixel_area = src.res[0] * src.res[1]  # Area of single pixel
 
-        area_value = 0
-        for class_value in class_list:
+        area_tot = 0
+        area_classes = [0]*len(class_list)
+        for i, class_value in enumerate(class_list):
             class_pixels = (band == class_value).sum()
-            area_value += class_pixels * pixel_area
-    return area_value
+            area_classes[i] = class_pixels * pixel_area
+            area_tot += class_pixels * pixel_area
+    return [area_tot, area_classes]
 
 # Clip su area di interesse
 # Input(tiff, ROI) Output (tiff)  
