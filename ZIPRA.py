@@ -80,42 +80,82 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
                 print(f"Band {band} found at {band_file_path}")
                 break
     print("A total of ", len(Band_final_path), " out of ", len(band_list), " bands have been found.")
-    
-    #VRT path
-    temp_file = os.path.join(root, "temporal.vrt")
+
+    # 1. Resample individual bands to 10m
+    resampled_files = []
+    for band_path, band_name in zip(Band_final_path, band_list):
+        res_file = os.path.join(root, f"{band_name}_resampled.tif")
+
+        try:
+            # Open using Absolute Path
+            src_ds = gdal.Open(band_path)
+            if not src_ds:
+                print(f"Error: GDAL returned None for {band_path}")
+                continue
+
+            # Warp
+            gdal.Warp(res_file, src_ds, xRes=10, yRes=10,
+                      resampleAlg=gdal.GRA_Bilinear, format='GTiff')
+
+            src_ds = None  # Close source
+            resampled_files.append(res_file)
+        except Exception as e:
+            print(f"GDAL Error on band {band_name}: {e}")
+
+    if not resampled_files:
+        print("Error: No bands were successfully resampled. Check JP2 drivers.")
+        return None, []
+
+    # 2. Create VRT (Virtual Raster) to stack bands
+    temp_vrt = os.path.join(root, "stack_temp.vrt")
     if output_file is None:
         final_file = os.path.join(root, f"{Image_name}.tif")
-    elif output_file.endswith('.tif'): 
-        final_file=output_file
     else:
-        final_file = os.path.join(root, f"{Image_name}.tif")
-        print("The output path is not valid or complete, data will be saved in ",final_file)
+        final_file = output_file
 
-    # Build virtual raster keeping bands separate
     try:
-        vrt_options = gdal.BuildVRTOptions(resampleAlg=gdal.GRIORA_NearestNeighbour, separate=True)
-        gdal.BuildVRT(temp_file, Band_final_path, options=vrt_options)
-        print("VRT created succesfully")
-    except Exception as e:
-        print(f"Error creating VRT with gdal.BuildVRT: {e}")
+        vrt_options = gdal.BuildVRTOptions(separate=True)
+        ds_vrt = gdal.BuildVRT(temp_vrt, resampled_files, options=vrt_options)
 
-    # Resample to 10m and save as GeoTIFF
-    try:
-        warp_options = gdal.WarpOptions(
-            format='GTiff', 
-            xRes=10.0, 
-            yRes=10.0,
-            resampleAlg=gdal.GRA_CubicSpline
-        )
-        gdal.Warp(final_file, temp_file, options=warp_options)
-        print(f"File resampled and saved as GeoTIFF at {final_file}")
-        os.remove(temp_file)
-    except Exception as e:
-        print("Error during resampling:", e)
+        # Set descriptions in VRT
+        for i, name in enumerate(band_list):
+            ds_vrt.GetRasterBand(i + 1).SetDescription(name)
+        ds_vrt = None  # Save VRT
 
+        # 3. Create Final GeoTIFF
+        vrt_ds_src = gdal.Open(temp_vrt)
+        warp_opts = gdal.WarpOptions(format='GTiff', creationOptions=['COMPRESS=DEFLATE', 'PREDICTOR=2'])
+        gdal.Warp(final_file, vrt_ds_src, options=warp_opts)
+        vrt_ds_src = None
+
+        # 4. Write metadata to the final TIFF
+        ds_update = gdal.Open(final_file, gdal.GA_Update)
+        if ds_update:
+            for i, name in enumerate(band_list):
+                ds_update.GetRasterBand(i + 1).SetDescription(name)
+            ds_update = None  # Close and save
+            print(f"File saved as GeoTIFF at {final_file} with correct metadata.")
+        else:
+            print("Error writing metadata to final file.")
+
+    except Exception as e:
+        print(f"Error during stacking: {e}")
+
+    # Cleanup
+    if os.path.exists(temp_vrt):
+        try:
+            os.remove(temp_vrt)
+        except:
+            pass
+    for f in resampled_files:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except:
+                pass
     return final_file, band_list
 
-#Indici ndvi - nbr - ndwi 
+#Indici ndvi - nbr - ndwi
 # Input(tiff, lista indici da aggiungere) Output (tiff file con nuovi layer per ogni indice)
 
 #def Indices_calculation(tiff_file, index_list):
