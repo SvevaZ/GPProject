@@ -5,6 +5,21 @@ Run with:
 Or:
     pip install pytest pytest-cov
     pytest tests/test_indices_calculation.py -vv
+
+The tests cover:
+    1. Default behavior - calculates NDVI, NBR, NDWI by default
+    2. Single index - calculates only a single index
+    3. Multiple indices - calculates multiple indices together
+    4. Invalid indices - skips invalid indices
+    5. All invalid - returns None if all inputs are invalid
+    6. Case insensitive - treats "ndvi" as "NDVI"
+    7. NaN handling - converts zeros to NaN
+    8. Skip duplicates - does not recalculate indices already present
+    9. Custom output - uses a custom file path
+    10. EVI calculation - validates complex formula
+    11. NDBI calculation - calculates urban index
+    12. Missing bands - skips indices missing required bands
+    13. Infinity handling - converts infinite values to NaN
 """
 
 import unittest
