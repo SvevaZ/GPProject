@@ -41,8 +41,21 @@ Check `EXAMPLE.ipynb` for a complete workflow including:
 
 ## 5. Testing
 
-Run unit tests using: -- da fare
+The project includes comprehensive unit tests for all functions.
 
+### Run Tests
+```bash
+# Using unittest
+  python -m unittest discover tests
+
+# Using pytest (recommended)
+  pip install pytest pytest-cov  
+  pytest tests/ -vv
+
+# With full library coverage report
+  pytest tests/ --cov=ZIPRA --cov-report=html
+  open htmlcov/index.html
+```
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
