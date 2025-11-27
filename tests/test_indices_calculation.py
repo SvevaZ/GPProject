@@ -1,7 +1,10 @@
 """
 Unit tests for Indices_calculation function
-Run with: python -m unittest tests/test_indices_calculation.py
-Or: pytest tests/test_indices_calculation.py -v
+Run with:
+    python -m unittest tests/test_indices_calculation.py
+Or:
+    pip install pytest pytest-cov
+    pytest tests/test_indices_calculation.py -vv
 """
 
 import unittest
@@ -249,8 +252,8 @@ class TestIndicesCalculation(unittest.TestCase):
         
         with rasterio.open(output_file) as src:
             evi = src.read(8)
-            print(evi)
-            # EVI should be roughly in range [-1, 1] but can be slightly outside
+
+            # EVI should be  in range [-1, 1]
             valid_evi = evi[~np.isnan(evi)]
             self.assertTrue(np.all(valid_evi >= -2), "EVI should be >= -1")
             self.assertTrue(np.all(valid_evi <= 2), "EVI should be <= 1")
