@@ -370,10 +370,18 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
                     res = (get_band("B11") - get_band("B08")) / (get_band("B11") + get_band("B08"))
                 elif idx == "SAVI":
                     L = 0.5
-                    res = ((get_band("B08") - get_band("B04")) / (get_band("B08") + get_band("B04") + L)) * (1 + L)
+                    # Scale Reflectance
+                    nir = get_band("B08") / 10000.0
+                    red = get_band("B04") / 10000.0
+
+                    res = ((nir - red) / (nir + red+ L)) * (1 + L)
                 elif idx == "EVI":
-                    res = 2.5 * ((get_band("B08") - get_band("B04")) /
-                                 (get_band("B08") + 6*get_band("B04") - 7.5*get_band("B02") + 1))
+                    # Scale Reflectance
+                    nir = get_band("B08")/ 10000.0
+                    red = get_band("B04")/ 10000.0
+                    blue = get_band("B02")/ 10000.0
+
+                    res = 2.5 * ((nir - red) / (nir + 6*red - 7.5*blue + 1))
 
                 res[np.isinf(res)] = np.nan
                 new_bands.append(res)
