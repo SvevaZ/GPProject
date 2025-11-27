@@ -130,7 +130,8 @@ def Area_calculation(tiff_file, class_list, SCL_band):
 
         INPUTS:
         - tiff_file: The path to the input GeoTIFF file.
-        - class_list: A list of class values for which to calculate the area.
+        - class_list: A list of class values for which calculate the area.
+        - SCL band: n° of the SCL band to be considered to get the class values.
 
         OUTPUTS:
         - The total area (in square meters) occupied by the specified classes.
@@ -172,7 +173,7 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
             - A path to a shapefile or geojson file.
             - A GeoDataFrame containing the geometry.
         - AOI_crs: The coordinate reference system of the AOI (default is "EPSG:4326").
-        - output_path: The path to save the clipped GeoTIFF file
+        - output_path: The path to save the clipped GeoTIFF file.
 
         OUTPUT:
         - The path to the clipped GeoTIFF file.
@@ -231,9 +232,113 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
         print("An error occurred while opening the raster file:", e)
         return None
     
-    
     return output_path
 
-# LAST TO BE ADDED:
 # Creare maschere in base alla banda SCL su richiesta dell’utente (restituire immagine mascherata)
-# istogramma con occurences delle classi
+def mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
+    ''' This function calculates the mask from a tiff file and specified classes.
+
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - class_list: A list of class values for which mask the tiff.
+        - SCL band: n° of the SCL band to be considered to get the class values.
+        - output_path: The path to save the masked GeoTIFF file.
+
+        OUTPUT:
+        - The path to the masked GeoTIFF file.
+    '''
+
+    # Check if it's a list, also to have just 1 value as a list
+    if not isinstance(class_list, list):
+        try:
+            class_list = [int(class_list)]
+        except ValueError:
+            print("Class list must be an integer or a list of integers.")
+
+    # Create output path
+    if not output_path:
+        base, ext = os.path.splitext(tiff_file)
+        output_path = f"{base}_MASKED{ext}"
+
+    try:
+        with rasterio.open(tiff_file) as src:
+            
+            class_value = src.read(SCL_band)  # Read band SCL
+            mask = np.isin(class_value, class_list)
+            data = src.read()         # all bands
+
+            # Apply mask: NaN pixel to be masked
+            masked_image = np.where(mask, src.nodata if src.nodata is not None else 0, data)
+            
+            out_meta = src.meta.copy()  # For copying metadata
+            out_meta.update({
+                    "height": masked_image.shape[1],
+                    "width": masked_image.shape[2],
+                    "transform": src.transform
+                })
+            
+            try:
+                with rasterio.open(output_path, "w", **out_meta) as masked_tiff_file:
+                    masked_tiff_file.write(masked_image)
+            except Exception as e:
+                print("An error occurred while saving the masked raster file:", e)
+                return None
+
+    except Exception as e:
+        print("An error occurred while opening the raster file:", e)
+        return None
+
+    return output_path
+
+# Restituire classi, count e eventuale stats 
+def barplot_classes(tiff_file, SCL_band, stats = False):
+    ''' This function calculates the histogram of occurences of specified classes.
+
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - SCL band: n° of the SCL band to be considered to get the class values.
+        - stats: True if the users wants also the max, mean, min values
+        OUTPUT:
+        - The histogram for the given classes.
+    '''
+    stats_results = {} #initialize result
+
+    try:
+        with rasterio.open(tiff_file) as src:
+            
+            class_value = src.read(SCL_band)  # Read band SCL
+            unique_classes, counts = np.unique(class_value, return_counts=True) #to be used for the plot
+
+        if stats:
+            # count pixel for each class
+            sum_class = [(class_value == u).sum() for u in unique_classes]
+
+            # Values max, min, mean
+            max_value = np.max(sum_class)
+            max_class = unique_classes[np.argmax(sum_class)]
+
+            min_value = np.min(sum_class)
+            min_class = unique_classes[np.argmin(sum_class)]
+
+            mean_value = np.mean(sum_class)
+            # Class closer to the mean
+            mean_class = unique_classes[np.argmin(np.abs(sum_class - mean_value))]
+
+            # Results in a dictionary
+            stats_results = {
+                            "max_value": max_value,
+                            "max_class": int(max_class),
+                            "min_value": min_value,
+                            "min_class": int(min_class),
+                            "mean_value": mean_value,
+                            "mean_class": int(mean_class)
+                            }
+            
+            return unique_classes, counts, stats_results
+
+    except Exception as e:
+        print("An error occurred while opening the raster file:", e)
+        return None
+
+    return unique_classes, counts
+
