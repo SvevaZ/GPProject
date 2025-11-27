@@ -52,7 +52,7 @@ The project includes comprehensive unit tests for all functions.
   pip install pytest pytest-cov  
   pytest tests/ -vv
 
-# With full library coverage report
+# See full library coverage report
   pytest tests/ --cov=ZIPRA --cov-report=html
   open htmlcov/index.html
 ```
