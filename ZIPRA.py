@@ -292,9 +292,19 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
 
     valid_indices = ["NDVI", "NBR", "NDWI", "NDMI", "SAVI", "EVI", "NDBI"]
     index_list = [idx.upper() for idx in index_list]
-    for idx in index_list:
-        if idx not in valid_indices:
-            print(f"Warning: {idx} is not a supported index.")
+
+    # Find non valid indices
+    invalid_indices = [idx for idx in index_list if idx not in valid_indices]
+    if invalid_indices:
+        print(f"Warning: The following indices are not supported and will be skipped: {', '.join(invalid_indices)}")
+
+    # filter only valid indices
+    index_list = [idx for idx in index_list if idx in valid_indices]
+
+    # Check if there is at least one valid
+    if not index_list:
+        print(f"Error: No valid indices provided. Available indices: {', '.join(valid_indices)}")
+        return None, []
 
     # Required bands per index
     reqs = {
@@ -309,8 +319,8 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
             meta = src.meta.copy()
             descriptions = src.descriptions
 
-            # --- BAND MAPPING ---
-            sentinel_bands = ["B02","B03","B04","B08","B11","B12","SCL"]
+            # --- Sentinel-2 BAND MAPPING ---
+            sentinel_bands = ["B01","B02","B03","B04","B05", "B06", "B07","B08", "B8A","B09","B11","B12","SCL"]
             band_map = {}
             for i, desc in enumerate(descriptions, 1):
                 if desc in sentinel_bands:
