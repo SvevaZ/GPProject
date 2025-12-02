@@ -4,8 +4,9 @@
 import os
 import zipfile
 import rasterio
-from osgeo import gdal
+#from osgeo import gdal
 from rasterio import mask
+import numpy as np
 
 
 #Estrazione bande di interesse dell’utente: 
