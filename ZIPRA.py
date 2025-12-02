@@ -82,7 +82,7 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
                 break
     print("A total of ", len(Band_final_path), " out of ", len(band_list), " bands have been found.")
     
-    #VRT path
+    #VRT and final raster path
     temp_file = os.path.join(root, "temporal.vrt")
     if output_file is None:
         final_file = os.path.join(root, f"{Image_name}.tif")
@@ -110,9 +110,27 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
         )
         gdal.Warp(final_file, temp_file, options=warp_options)
         print(f"File resampled and saved as GeoTIFF at {final_file}")
+        
+        #Delete temporal vrt
         os.remove(temp_file)
+        
+        # Assign band names as metadata
+        raster = gdal.Open(final_file, gdal.GA_Update)
+        if raster:
+            for i, name in enumerate(band_list):
+                raster.GetRasterBand(i + 1).SetDescription(name)
+            raster = None
+            print("Metadata successfully added")
+        else:
+            print("Warning, impossible opening raster to add metadata")
+
     except Exception as e:
-        print("Error during resampling:", e)
+        print(f"Error during resampling and metadata assignement: {e}")
+        if os.path.exists(temp_file):
+            try:
+                os.remove(temp_file)
+            except:
+                pass
 
     return final_file, band_list
 
