@@ -4,7 +4,7 @@
 import os
 import zipfile
 import rasterio
-#from osgeo import gdal
+from osgeo import gdal
 from rasterio import mask
 from shapely import wkt
 import geopandas as gpd
