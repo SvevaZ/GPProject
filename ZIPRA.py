@@ -79,7 +79,6 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
             if band in file:
                 band_file_path = os.path.join(band_path, file)
                 Band_final_path.append(band_file_path)
-                print(f"Band {band} found at {band_file_path}")
                 break
     print("A total of ", len(Band_final_path), " out of ", len(band_list), " bands have been found.")
     
