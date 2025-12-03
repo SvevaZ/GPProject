@@ -418,7 +418,7 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
                 res[np.isinf(res)] = np.nan
                 new_bands.append(res)
                 calc_names.append(idx)
-                print(f"Calculated {idx} (with masking)")
+                print(f"Calculated {idx}")
 
             if not new_bands:
                 print("No indices calculated.")
