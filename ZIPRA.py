@@ -4,13 +4,14 @@
 import os
 import zipfile
 import rasterio
-#from osgeo import gdal
+from osgeo import gdal
 from rasterio import mask
+from shapely import wkt
+import geopandas as gpd
 import numpy as np
-
+from shapely.geometry import box
 
 #Estrazione bande di interesse dell’utente: 
-
 def Band_estraction(zip_file, band_list=None, output_file=None):
     ''' This function produces a GeoTIFF file containing the selected bands from Sentinel 2 .SAFE file.
         If no bands are provided, it extracts the bands: B02, B03, B04, B08, B12, SCL by default.
@@ -78,7 +79,6 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
             if band in file:
                 band_file_path = os.path.join(band_path, file)
                 Band_final_path.append(band_file_path)
-                print(f"Band {band} found at {band_file_path}")
                 break
     print("A total of ", len(Band_final_path), " out of ", len(band_list), " bands have been found.")
     
@@ -134,7 +134,7 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
 
     return final_file, band_list
 
-#Indici ndvi - nbr - ndwi 
+#Indici ndvi - nbr - ndwi
 # Input(tiff, lista indici da aggiungere) Output (tiff file con nuovi layer per ogni indice)
 
 #def Indices_calculation(tiff_file, index_list):
@@ -253,6 +253,150 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
     
     return output_path
 
+
+def Indices_calculation(tiff_file, index_list=None, output_file=None):
+    """
+    Calculates spectral indices from Sentinel-2 bands.
+    Automatically detects original bands and ignores previously calculated indices.
+    Skips indices already present in the TIFF.
+    Handles 0-values as NaN.
+    """
+
+    # Default indices
+    if index_list is None:
+        index_list = ["NDVI", "NBR", "NDWI"]
+
+    valid_indices = ["NDVI", "NBR", "NDWI", "NDMI", "SAVI", "EVI", "NDBI"]
+    index_list = [idx.upper() for idx in index_list]
+
+    # Find non valid indices
+    invalid_indices = [idx for idx in index_list if idx not in valid_indices]
+    if invalid_indices:
+        print(f"Warning: The following indices are not supported and will be skipped: {', '.join(invalid_indices)}")
+
+    # filter only valid indices
+    index_list = [idx for idx in index_list if idx in valid_indices]
+
+    # Check if there is at least one valid
+    if not index_list:
+        print(f"Error: No valid indices provided. Available indices: {', '.join(valid_indices)}")
+        return None, []
+
+    # Required bands per index
+    reqs = {
+        "NDVI": ["B04", "B08"], "NBR": ["B08", "B12"], "NDWI": ["B03", "B08"],
+        "NDMI": ["B08", "B11"], "SAVI": ["B04", "B08"], "EVI": ["B02", "B04", "B08"],
+        "NDBI": ["B08", "B11"]
+    }
+
+    try:
+        with rasterio.open(tiff_file) as src:
+            data = src.read()
+            meta = src.meta.copy()
+            descriptions = src.descriptions
+
+            # --- Sentinel-2 BAND MAPPING ---
+            sentinel_bands = ["B01","B02","B03","B04","B05", "B06", "B07","B08", "B8A","B09","B11","B12","SCL"]
+            band_map = {}
+            for i, desc in enumerate(descriptions, 1):
+                if desc in sentinel_bands:
+                    band_map[desc] = i
+
+            if not band_map:
+                print("Metadata missing. Assuming default Sentinel-2 order.")
+                band_map = {b:i+1 for i,b in enumerate(sentinel_bands)}
+
+            # --- CHECK EXISTING INDICES ---
+            existing_indices = [d for d in descriptions if d in valid_indices]
+            # Filter out indices already present
+            index_list = [idx for idx in index_list if idx not in existing_indices]
+            if not index_list:
+                print("All requested indices are already present in the image. Nothing to calculate.")
+                return tiff_file, []
+
+            # --- CALCULATION LOOP ---
+            new_bands = []
+            calc_names = []
+
+            def get_band(name):
+                """Return band as float32 with 0 converted to NaN"""
+                if name not in band_map:
+                    raise ValueError(f"Band {name} not found in the raster.")
+                b = data[band_map[name]-1].astype('float32')
+                b[b==0] = np.nan
+                return b
+
+            for idx in index_list:
+                needed = reqs[idx]
+                missing = [b for b in needed if b not in band_map]
+                if missing:
+                    print(f"Skipping {idx}: Missing bands {missing}")
+                    continue
+
+                # Compute indices
+                if idx == "NDVI":
+                    res = (get_band("B08") - get_band("B04")) / (get_band("B08") + get_band("B04"))
+                elif idx == "NBR":
+                    res = (get_band("B08") - get_band("B12")) / (get_band("B08") + get_band("B12"))
+                elif idx == "NDWI":
+                    res = (get_band("B03") - get_band("B08")) / (get_band("B03") + get_band("B08"))
+                elif idx == "NDMI":
+                    res = (get_band("B08") - get_band("B11")) / (get_band("B08") + get_band("B11"))
+                elif idx == "NDBI":
+                    res = (get_band("B11") - get_band("B08")) / (get_band("B11") + get_band("B08"))
+                elif idx == "SAVI":
+                    L = 0.5
+                    # Scale Reflectance
+                    nir = get_band("B08") / 10000.0
+                    red = get_band("B04") / 10000.0
+
+                    res = ((nir - red) / (nir + red+ L)) * (1 + L)
+                elif idx == "EVI":
+                    # Scale Reflectance
+                    nir = get_band("B08")/ 10000.0
+                    red = get_band("B04")/ 10000.0
+                    blue = get_band("B02")/ 10000.0
+
+                    res = 2.5 * ((nir - red) / (nir + 6*red - 7.5*blue + 1))
+
+                res[np.isinf(res)] = np.nan
+                new_bands.append(res)
+                calc_names.append(idx)
+                print(f"Calculated {idx} (with masking)")
+
+            if not new_bands:
+                print("No indices calculated.")
+                return tiff_file, []
+
+            # --- SAVE OUTPUT ---
+            out_data = np.vstack([data, np.array(new_bands)])
+            meta.update(count=out_data.shape[0], dtype='float32', nodata=None)
+
+            if output_file is None:
+                output_file = tiff_file.replace(".tif", "_indices.tif")
+
+            with rasterio.open(output_file, 'w', **meta) as dst:
+                # Write original bands
+                for i in range(data.shape[0]):
+                    dst.write(data[i], i+1)
+                    desc = descriptions[i] if descriptions[i] else f"B{i+1:02d}"
+                    dst.set_band_description(i+1, desc)
+
+                # Write calculated indices
+                for i, band in enumerate(new_bands):
+                    idx_band = data.shape[0] + i + 1
+                    dst.write(band.astype('float32'), idx_band)
+                    dst.set_band_description(idx_band, calc_names[i])
+
+            print(f"Saved with indices to: {output_file}")
+            return output_file, calc_names
+
+    except Exception as e:
+        print(f"Calculation error: {e}")
+        return None, []
+
+
+# LAST TO BE ADDED:
 # Creare maschere in base alla banda SCL su richiesta dell’utente (restituire immagine mascherata)
 def mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
     ''' This function calculates the mask from a tiff file and specified classes.
