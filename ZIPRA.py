@@ -1,6 +1,36 @@
 #--------------------------------------------------------
 #              ZIPRA - ZIP Raster Analysis              #
 #--------------------------------------------------------
+'''
+ZIPRA (ZIP Raster Analysis) is a Python library that simplifies the workflow
+of extracting, processing, and analyzing Sentinel-2 satellite data directly
+from .SAFE zip files.
+
+Supported input structures:
+    - Sentinel-2 *.zip* archives
+    - Sentinel-2 *.SAFE* folders
+    - GeoTIFF files produced by this library
+
+Functions:
+    - Band_estraction: Extract and resample Sentinel-2 bands from .SAFE files
+    - Indices_calculation: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI)
+    - Area_calculation: Calculate areas for specific land cover classes
+    - Clip_AOI: Clip raster to area of interest
+    - mask_tiff: Create quality masks based on Scene Classification Layer (SCL)
+    - barplot_classes: Generate histogram of SCL class distribution
+
+Requirements:
+    Please refer to the requirements.txt file in the GitHub repository
+    for the complete and up-to-date list of dependencies needed to run this project.
+    - Python, GDAL, rasterio, numpy, pandas, shapely, geopandas
+
+Authors: Sveva, Cristina, Silvia
+Version: 1.0
+MIT License
+For more information, see README.md or visit:
+https://github.com/SvevaZ/GPProject
+'''
+
 import os
 import zipfile
 import rasterio
@@ -255,12 +285,37 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
 
 
 def Indices_calculation(tiff_file, index_list=None, output_file=None):
-    """
-    Calculates spectral indices from Sentinel-2 bands.
-    Automatically detects original bands and ignores previously calculated indices.
-    Skips indices already present in the TIFF.
-    Handles 0-values as NaN.
-    """
+    ''' This function calculates spectral indices from Sentinel-2 bands and adds them as new layers to the GeoTIFF file.
+         Supported indices: NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI
+
+         INPUTS:
+         - tiff_file: The path to the input GeoTIFF file containing Sentinel-2 bands.
+         - index_list: A list of index names to calculate (optional).
+                      Available indices: ["NDVI", "NBR", "NDWI", "NDMI", "NDBI", "SAVI", "EVI"]
+                      If None, calculates NDVI, NBR, and NDWI by default.
+         - output_file: The path for the output GeoTIFF file with added index layers.
+                       If None, creates a new file with "_indices" suffix.
+
+         OUTPUTS:
+         - The path to the output GeoTIFF file containing original bands plus calculated indices.
+         - A list of the indices that were successfully calculated.
+
+         FORMULAS:
+         - Normalized Vegetation Difference Index
+                NDVI = (NIR - Red) / (NIR + Red) = [B08 - B04] / [B08 + B04]
+         - Normalised Burn Ratio
+                NBR = (NIR - SWIR2) / (NIR + SWIR2) = [B08 - B12] / [B08 + B12]
+         - Normalized Difference Water Index
+                NDWI = (Green - NIR) / (Green + NIR) = [B03 - B08] / [B03 + B08]
+         - Normalized Difference Moisture Index
+                NDMI = (NIR - SWIR1) / (NIR + SWIR1) = [B08 - B11] / [B08 + B11]
+         - Normalized Difference Built-up Index
+                NDBI =(SWIR1 - NIR) / (NIR + SWIR1) = [B11 - B08] / [B08 + B11]
+         - Soil Adjusted Vegetation Index
+                SAVI = ((NIR - Red) / (NIR + Red + L)) * (1 + L)  where L=0.5
+         - Enhanced Vegetation Index
+                EVI = 2.5 * ((NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1))
+     '''
 
     # Default indices
     if index_list is None:
@@ -298,26 +353,27 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
             # --- Sentinel-2 BAND MAPPING ---
             sentinel_bands = ["B01","B02","B03","B04","B05", "B06", "B07","B08", "B8A","B09","B11","B12","SCL"]
             band_map = {}
+            # Automatically detects original bands
             for i, desc in enumerate(descriptions, 1):
                 if desc in sentinel_bands:
                     band_map[desc] = i
-
+            # If band info not found, assume default Sentinel-2 order
             if not band_map:
                 print("Metadata missing. Assuming default Sentinel-2 order.")
                 band_map = {b:i+1 for i,b in enumerate(sentinel_bands)}
 
             # --- CHECK EXISTING INDICES ---
             existing_indices = [d for d in descriptions if d in valid_indices]
-            # Filter out indices already present
+            # Filter out indices already present in the TIFF
             index_list = [idx for idx in index_list if idx not in existing_indices]
             if not index_list:
                 print("All requested indices are already present in the image. Nothing to calculate.")
                 return tiff_file, []
 
-            # --- CALCULATION LOOP ---
+            # --- INDEX CALCULATION LOOP ---
             new_bands = []
             calc_names = []
-
+            # Function to check if needed bands are present to calculate the specific index
             def get_band(name):
                 """Return band as float32 with 0 converted to NaN"""
                 if name not in band_map:
@@ -325,7 +381,7 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
                 b = data[band_map[name]-1].astype('float32')
                 b[b==0] = np.nan
                 return b
-
+            # If needed bands are missing, exclude the index from calculation
             for idx in index_list:
                 needed = reqs[idx]
                 missing = [b for b in needed if b not in band_map]
