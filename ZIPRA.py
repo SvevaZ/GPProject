@@ -167,123 +167,6 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
 #Indici ndvi - nbr - ndwi
 # Input(tiff, lista indici da aggiungere) Output (tiff file con nuovi layer per ogni indice)
 
-#def Indices_calculation(tiff_file, index_list):
-#    return tiff_file
-
-#Area di una certa classe/gruppo classi
-# Input(tiff, classe o lista di classi) Output (numero)
-
-# Consideration: the class list is unique for each pixel, no possibility of overlapping classes
-def Area_calculation(tiff_file, class_list, SCL_band):
-    ''' This function calculates the area of the specified classes in a GeoTIFF file.
-
-        INPUTS:
-        - tiff_file: The path to the input GeoTIFF file.
-        - class_list: A list of class values for which calculate the area.
-        - SCL band: n° of the SCL band to be considered to get the class values.
-
-        OUTPUTS:
-        - The total area (in square meters) occupied by the specified classes.
-    '''
-
-    # Check if it's a list, also to have just 1 value as a list
-    if not isinstance(class_list, list):
-        try:
-            class_list = [int(class_list)]
-        except ValueError:
-            print("Class list must be an integer or a list of integers.")
-
-    with rasterio.open(tiff_file) as src:
-        band = src.read(SCL_band)  # Read band SCL
-        pixel_area = src.res[0] * src.res[1]  # Area of single pixel
-
-        area_tot = 0
-        area_classes = [0]*len(class_list)
-        for i, class_value in enumerate(class_list):
-            class_pixels = (band == class_value).sum()
-            area_classes[i] = class_pixels * pixel_area
-            area_tot += class_pixels * pixel_area
-    return [area_tot, area_classes]
-
-# Clip su area di interesse
-# Input(tiff, ROI) Output (tiff)  
-
-# default AOI CRS is "EPSG:4326" for map drawn geometries
-# (otherwise need to specify and add the correct CRS)
-# default output path is "clipped_image.tif"
-
-def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
-    ''' This function calculates the clip from a tiff file.
-
-        INPUTS:
-        - tiff_file: The path to the input GeoTIFF file.
-        - AOI: The Area of Interest to clip the raster. It can be provided as:
-            - A WKT string representing the geometry.
-            - A path to a shapefile or geojson file.
-            - A GeoDataFrame containing the geometry.
-        - AOI_crs: The coordinate reference system of the AOI (default is "EPSG:4326").
-        - output_path: The path to save the clipped GeoTIFF file.
-
-        OUTPUT:
-        - The path to the clipped GeoTIFF file.
-    '''
-
-    # Load AOI in GeoDataFrame
-    if isinstance(AOI, str):
-        if AOI.lower().endswith((".shp", ".geojson", ".json")):
-            aoi_gdf = gpd.read_file(AOI)  # read CRS from file
-        else:
-            geom_obj = wkt.loads(AOI)
-            aoi_gdf = gpd.GeoDataFrame(geometry=[geom_obj], crs=AOI_crs)
-    elif isinstance(AOI, gpd.GeoDataFrame):
-        aoi_gdf = AOI.copy()
-    else:
-        raise TypeError("AOI must be WKT, path to a file, or GeoDataFrame")
-    
-    # Create output path
-    if not output_path:
-        base, ext = os.path.splitext(tiff_file)
-        output_path = f"{base}_CLIPPED{ext}"
-
-    try:
-        with rasterio.open(tiff_file) as src:
-            tiff_crs = src.crs
-            #print("CRS raster:", src.crs)
-            #print("Bounds raster:", src.bounds)
-            # Reproject geometry to match raster CRS if needed  
-            if AOI_crs != tiff_crs:
-                aoi_gdf = aoi_gdf.to_crs(tiff_crs)
-       
-            # Geojson format
-            geojson_geom = [aoi_gdf.geometry.iloc[0].__geo_interface__]
-            print("Intersection AOI/raster:", aoi_gdf.intersects(box(*src.bounds)).values)
-
-            if aoi_gdf.intersects(box(*src.bounds)).values[0] == False:
-                print("The AOI does not intersect the raster extent. Please, select a different AOI.")
-                return None
-            else:
-                out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
-                out_meta = src.meta.copy()  # For copying metadata
-                out_meta.update({
-                    "height": out_image.shape[1],
-                    "width": out_image.shape[2],
-                    "transform": out_transform
-                })
-
-            try:
-                with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
-                    clipped_tiff_file.write(out_image)
-            except Exception as e:
-                print("An error occurred while saving the clipped raster file:", e)
-                return None
-        
-    except Exception as e:
-        print("An error occurred while opening the raster file:", e)
-        return None
-    
-    return output_path
-
-
 def Indices_calculation(tiff_file, index_list=None, output_file=None):
     ''' This function calculates spectral indices from Sentinel-2 bands and adds them as new layers to the GeoTIFF file.
          Supported indices: NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI
@@ -451,10 +334,123 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
         print(f"Calculation error: {e}")
         return None, []
 
+#Area di una certa classe/gruppo classi
+# Input(tiff, classe o lista di classi) Output (numero)
+
+# Consideration: the class list is unique for each pixel, no possibility of overlapping classes
+def Area_calculation(tiff_file, class_list, SCL_band):
+    ''' This function calculates the area of the specified classes in a GeoTIFF file.
+
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - class_list: A list of class values for which calculate the area.
+        - SCL band: n° of the SCL band to be considered to get the class values.
+
+        OUTPUTS:
+        - The total area (in square meters) occupied by the specified classes.
+    '''
+
+    # Check if it's a list, also to have just 1 value as a list
+    if not isinstance(class_list, list):
+        try:
+            class_list = [int(class_list)]
+        except ValueError:
+            print("Class list must be an integer or a list of integers.")
+
+    with rasterio.open(tiff_file) as src:
+        band = src.read(SCL_band)  # Read band SCL
+        pixel_area = src.res[0] * src.res[1]  # Area of single pixel
+
+        area_tot = 0
+        area_classes = [0]*len(class_list)
+        for i, class_value in enumerate(class_list):
+            class_pixels = (band == class_value).sum()
+            area_classes[i] = class_pixels * pixel_area
+            area_tot += class_pixels * pixel_area
+    return [area_tot, area_classes]
+
+# Clip su area di interesse
+# Input(tiff, ROI) Output (tiff)  
+
+# default AOI CRS is "EPSG:4326" for map drawn geometries
+# (otherwise need to specify and add the correct CRS)
+# default output path is "clipped_image.tif"
+
+def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
+    ''' This function calculates the clip from a tiff file.
+
+        INPUTS:
+        - tiff_file: The path to the input GeoTIFF file.
+        - AOI: The Area of Interest to clip the raster. It can be provided as:
+            - A WKT string representing the geometry.
+            - A path to a shapefile or geojson file.
+            - A GeoDataFrame containing the geometry.
+        - AOI_crs: The coordinate reference system of the AOI (default is "EPSG:4326").
+        - output_path: The path to save the clipped GeoTIFF file.
+
+        OUTPUT:
+        - The path to the clipped GeoTIFF file.
+    '''
+
+    # Load AOI in GeoDataFrame
+    if isinstance(AOI, str):
+        if AOI.lower().endswith((".shp", ".geojson", ".json")):
+            aoi_gdf = gpd.read_file(AOI)  # read CRS from file
+        else:
+            geom_obj = wkt.loads(AOI)
+            aoi_gdf = gpd.GeoDataFrame(geometry=[geom_obj], crs=AOI_crs)
+    elif isinstance(AOI, gpd.GeoDataFrame):
+        aoi_gdf = AOI.copy()
+    else:
+        raise TypeError("AOI must be WKT, path to a file, or GeoDataFrame")
+    
+    # Create output path
+    if not output_path:
+        base, ext = os.path.splitext(tiff_file)
+        output_path = f"{base}_CLIPPED{ext}"
+
+    try:
+        with rasterio.open(tiff_file) as src:
+            tiff_crs = src.crs
+            #print("CRS raster:", src.crs)
+            #print("Bounds raster:", src.bounds)
+            # Reproject geometry to match raster CRS if needed  
+            if AOI_crs != tiff_crs:
+                aoi_gdf = aoi_gdf.to_crs(tiff_crs)
+       
+            # Geojson format
+            geojson_geom = [aoi_gdf.geometry.iloc[0].__geo_interface__]
+            print("Intersection AOI/raster:", aoi_gdf.intersects(box(*src.bounds)).values)
+
+            if aoi_gdf.intersects(box(*src.bounds)).values[0] == False:
+                print("The AOI does not intersect the raster extent. Please, select a different AOI.")
+                return None
+            else:
+                out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
+                out_meta = src.meta.copy()  # For copying metadata
+                out_meta.update({
+                    "height": out_image.shape[1],
+                    "width": out_image.shape[2],
+                    "transform": out_transform
+                })
+
+            try:
+                with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
+                    clipped_tiff_file.write(out_image)
+            except Exception as e:
+                print("An error occurred while saving the clipped raster file:", e)
+                return None
+        
+    except Exception as e:
+        print("An error occurred while opening the raster file:", e)
+        return None
+    
+    return output_path
+
 
 # LAST TO BE ADDED:
 # Creare maschere in base alla banda SCL su richiesta dell’utente (restituire immagine mascherata)
-def mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
+def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
     ''' This function calculates the mask from a tiff file and specified classes.
 
         INPUTS:
@@ -510,7 +506,7 @@ def mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
     return output_path
 
 # Restituire classi, count e eventuale stats 
-def barplot_classes(tiff_file, SCL_band, stats = False):
+def Barplot_classes(tiff_file, SCL_band, stats = False):
     ''' This function calculates the histogram of occurences of specified classes.
 
         INPUTS:
