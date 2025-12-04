@@ -41,6 +41,8 @@ import geopandas as gpd
 import numpy as np
 from shapely.geometry import box
 
+#------------------------- BAND ESTRACTION -------------------------
+
 #Estrazione bande di interesse dell’utente: 
 def Band_estraction(zip_file, band_list=None, output_file=None):
     ''' This function produces a GeoTIFF file containing the selected bands from Sentinel 2 .SAFE file.
@@ -164,8 +166,7 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
 
     return final_file, band_list
 
-#Indici ndvi - nbr - ndwi
-# Input(tiff, lista indici da aggiungere) Output (tiff file con nuovi layer per ogni indice)
+#------------------------- INDICES CALCULATION -------------------------
 
 def Indices_calculation(tiff_file, index_list=None, output_file=None):
     ''' This function calculates spectral indices from Sentinel-2 bands and adds them as new layers to the GeoTIFF file.
@@ -334,8 +335,7 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
         print(f"Calculation error: {e}")
         return None, []
 
-#Area di una certa classe/gruppo classi
-# Input(tiff, classe o lista di classi) Output (numero)
+#------------------------- AREA CALCULATION -------------------------
 
 # Consideration: the class list is unique for each pixel, no possibility of overlapping classes
 def Area_calculation(tiff_file, class_list, SCL_band):
@@ -369,7 +369,7 @@ def Area_calculation(tiff_file, class_list, SCL_band):
             area_tot += class_pixels * pixel_area
     return [area_tot, area_classes]
 
-# Clip su area di interesse
+#------------------------- CLIP AOI -------------------------
 # Input(tiff, ROI) Output (tiff)  
 
 # default AOI CRS is "EPSG:4326" for map drawn geometries
@@ -428,6 +428,8 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
             else:
                 out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
                 out_meta = src.meta.copy()  # For copying metadata
+                descriptions = src.descriptions #to get band descriptions
+            
                 out_meta.update({
                     "dtype": "float32",
                     "height": out_image.shape[1],
@@ -436,8 +438,11 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
                 })
 
             try:
-                with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
-                    clipped_tiff_file.write((out_image).astype("float32"))
+                with rasterio.open(output_path, "w", **out_meta) as dst:
+                    dst.write((out_image).astype("float32"))
+                    for i in range(out_image.shape[0]):
+                            desc = descriptions[i] if descriptions[i] else f"B{i+1:02d}"
+                            dst.set_band_description(i+1, desc)
             except Exception as e:
                 print("An error occurred while saving the clipped raster file:", e)
                 return None
@@ -448,9 +453,8 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
     
     return output_path
 
+#------------------------- MASK TIFF -------------------------
 
-# LAST TO BE ADDED:
-# Creare maschere in base alla banda SCL su richiesta dell’utente (restituire immagine mascherata)
 def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
     ''' This function calculates the mask from a tiff file and specified classes.
 
@@ -481,8 +485,8 @@ def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
             
             class_value = src.read(SCL_band)  # Read band SCL
             mask = np.isin(class_value, class_list)
-            data = src.read().astype("float32")        # all bands (force to float before the mask to handle NaN)
-
+            data = src.read().astype("float32")  # all bands (force to float before the mask to handle NaN)
+            
             # Apply mask
             masked_image = np.where(mask, -9999.0, data).astype("float32")
 
@@ -500,11 +504,10 @@ def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
             
             try:
                 with rasterio.open(output_path, "w", **out_meta) as dst:
-                    with rasterio.open(output_path, "w", **out_meta) as dst:
-                        dst.write(masked_image.astype("float32"))
-                        for i in range(masked_image.shape[0]):
-                            desc = descriptions[i] if descriptions[i] else f"B{i+1:02d}"
-                            dst.set_band_description(i+1, desc)
+                    dst.write(masked_image.astype("float32"))
+                    for i in range(masked_image.shape[0]):
+                        desc = descriptions[i] if descriptions[i] else f"B{i+1:02d}"
+                        dst.set_band_description(i+1, desc)
                     
             except Exception as e:
                 print("An error occurred while saving the masked raster file:", e)
@@ -516,7 +519,8 @@ def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
 
     return output_path
 
-# Restituire classi, count e eventuale stats 
+#------------------------- BARPLOT CLASSES -------------------------
+
 def Barplot_classes(tiff_file, SCL_band, stats = False):
     ''' This function calculates the histogram of occurences of specified classes.
 
