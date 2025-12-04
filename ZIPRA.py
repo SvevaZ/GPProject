@@ -77,7 +77,7 @@ def Band_estraction(zip_file, band_list=None, output_file=None):
     if not os.path.exists(zip_file):
         raise FileNotFoundError(f"File is not found at this path: {zip_file}")
     if zip_file.endswith('.zip'):
-        # Decompresse the zip file
+        # Decompress the zip file
         try:
             with zipfile.ZipFile(zip_file, 'r') as zip_ref:
                 zip_ref.extractall(path=root)    
@@ -429,6 +429,7 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
                 out_image, out_transform = rasterio.mask.mask(src, geojson_geom, crop=True)
                 out_meta = src.meta.copy()  # For copying metadata
                 out_meta.update({
+                    "dtype": "float32",
                     "height": out_image.shape[1],
                     "width": out_image.shape[2],
                     "transform": out_transform
@@ -436,7 +437,7 @@ def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
 
             try:
                 with rasterio.open(output_path, "w", **out_meta) as clipped_tiff_file:
-                    clipped_tiff_file.write(out_image)
+                    clipped_tiff_file.write((out_image).astype("float32"))
             except Exception as e:
                 print("An error occurred while saving the clipped raster file:", e)
                 return None
@@ -480,21 +481,31 @@ def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
             
             class_value = src.read(SCL_band)  # Read band SCL
             mask = np.isin(class_value, class_list)
-            data = src.read()         # all bands
+            data = src.read().astype("float32")        # all bands (force to float before the mask to handle NaN)
 
-            # Apply mask: NaN pixel to be masked
-            masked_image = np.where(mask, src.nodata if src.nodata is not None else 0, data)
-            
+            # Apply mask
+            masked_image = np.where(mask, -9999.0, data).astype("float32")
+
             out_meta = src.meta.copy()  # For copying metadata
+            descriptions = src.descriptions #to get band descriptions
             out_meta.update({
-                    "height": masked_image.shape[1],
-                    "width": masked_image.shape[2],
-                    "transform": src.transform
-                })
+                "driver": "GTiff",              # esplicit
+                "dtype": "float32",        
+                "nodata": -9999.0,
+                "height": masked_image.shape[1],
+                "width": masked_image.shape[2],
+                "count": masked_image.shape[0],  
+                "transform": src.transform
+            })
             
             try:
-                with rasterio.open(output_path, "w", **out_meta) as masked_tiff_file:
-                    masked_tiff_file.write(masked_image)
+                with rasterio.open(output_path, "w", **out_meta) as dst:
+                    with rasterio.open(output_path, "w", **out_meta) as dst:
+                        dst.write(masked_image.astype("float32"))
+                        for i in range(masked_image.shape[0]):
+                            desc = descriptions[i] if descriptions[i] else f"B{i+1:02d}"
+                            dst.set_band_description(i+1, desc)
+                    
             except Exception as e:
                 print("An error occurred while saving the masked raster file:", e)
                 return None
