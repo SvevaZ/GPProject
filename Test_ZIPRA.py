@@ -7,6 +7,12 @@ from ZIPRA import Band_estraction, Area_calculation, Clip_AOI, Indices_calculati
 class TestZipra(unittest.TestCase):
 
     def test_functions(self):
+
+        # Predefined inputs
+        class_list=[0,6]
+        SCL_band=6
+        AOI="POLYGON ((9.091187 45.752193, 9.091187 46.008409, 9.684448 46.008409, 9.684448 45.752193, 9.091187 45.752193))"
+
         ## BAND EXTRACTION TESTS
 
         zip = glob.glob("./DATA/S2B_*.zip")
@@ -58,14 +64,17 @@ class TestZipra(unittest.TestCase):
         tiff_with_indices, calculated_indices = Indices_calculation(tiff_file)
         # TO BE ADDED OTHER CHECKS --------------
 
-        # Predefined inputs: classes, SCL band and AOI
-        class_list=[0,6]
-        SCL_band=6
-        AOI="POLYGON ((9.091187 45.752193, 9.091187 46.008409, 9.684448 46.008409, 9.684448 45.752193, 9.091187 45.752193))"
 
         ## AREA CALCULATION TESTS
         Area_tot, Area_classes = Area_calculation(tiff_file, class_list, SCL_band)
-        # TO BE ADDED OTHER CHECKS --------------
+        
+        # Checks if the area calculations are valid
+        self.assertGreater(Area_tot, 0) 
+        for area in Area_classes:
+            self.assertGreaterEqual(area, 0)
+
+        self.assertEqual(len(Area_classes), len(class_list))
+        self.assertEqual(sum(Area_classes),Area_tot)
 
         ## CLIP AOI TESTS
         #Checks if the output obtained form the clip is valid
@@ -79,7 +88,12 @@ class TestZipra(unittest.TestCase):
 
         ## BARPLOT CLASSES TESTS
         unique_classes, counts = Barplot_classes(masked_tiff, SCL_band, False)
-        # TO BE ADDED OTHER CHECKS --------------
+        # Checks if the unique classes and counts are valid
+        self.assertEqual(len(unique_classes), len(counts))
+        # Checks that none of the masked classes are present in the unique_classes
+        for cls in unique_classes:
+            self.assertNotIn(cls, class_list)
+
 
         ## STATS TESTS ON OBTAINED RASTERS 
         stats_original = calculate_raster_area_stats(tiff_file)
@@ -92,11 +106,17 @@ class TestZipra(unittest.TestCase):
         self.assertGreaterEqual(stats_indices["min_area"], 0)
         self.assertGreaterEqual(stats_clipped["min_area"], 0)
         self.assertGreaterEqual(stats_masked["min_area"], 0)
-        # Max area must be >= min area
+        # Max area of a class must be >= min area of a class
         self.assertGreaterEqual(stats_original["max_area"], stats_original["min_area"])
         self.assertGreaterEqual(stats_indices["max_area"], stats_indices["min_area"])
         self.assertGreaterEqual(stats_clipped["max_area"], stats_clipped["min_area"])
         self.assertGreaterEqual(stats_masked["max_area"], stats_masked["min_area"])
+
+        # Clipped raster must have less or equal area than original (with or without indices)
+        self.assertLessEqual(stats_clipped["areas"].sum(), stats_indices["areas"].sum())
+        self.assertLessEqual(stats_clipped["areas"].sum(), stats_original["areas"].sum())
+        # Masked raster must have less or equal area than clipped
+        self.assertLessEqual(stats_masked["areas"].sum(), stats_clipped["areas"].sum())
 
 #Helper functions
 def open_raster(raster_path):
