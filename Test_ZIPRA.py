@@ -77,6 +77,10 @@ class TestZipra(unittest.TestCase):
         masked_tiff = Mask_tiff(clipped_tiff,class_list,SCL_band)
         self.assertIsNotNone(masked_tiff)
 
+        ## BARPLOT CLASSES TESTS
+        unique_classes, counts = Barplot_classes(masked_tiff, SCL_band, False)
+        # TO BE ADDED OTHER CHECKS --------------
+
         ## STATS TESTS ON OBTAINED RASTERS 
         stats_original = calculate_raster_area_stats(tiff_file)
         stats_indices = calculate_raster_area_stats(tiff_with_indices)
