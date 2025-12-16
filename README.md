@@ -56,9 +56,6 @@ The project includes comprehensive unit tests for all functions.
   pytest tests/ --cov=ZIPRA --cov-report=html
   open htmlcov/index.html
 ```
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Authors
 
@@ -75,10 +72,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Data provided by the [Copernicus Programme](https://www.copernicus.eu/)
 - ESA Sentinel-2 mission
 - Course: (061938) Geospatial Processing 2025 [Politecnico di Milano]
-
-## Contact
-
-For questions or issues, please open an issue on GitHub or contact us.
 
 ## 🔗 Useful Links
 
