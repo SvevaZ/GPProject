@@ -1,4 +1,4 @@
-name: ZIPRA_env
+name: ZIPRA_minimal
 channels:
   - conda-forge
   - defaults
@@ -173,4 +173,4 @@ dependencies:
   - zlib=1.3.1=h5f15de7_0
   - zstandard=0.25.0=py313h9734d34_1
   - zstd=1.5.7=h6491c7d_2
-prefix: /opt/anaconda3/envs/ZIPRA_env
+prefix: /opt/anaconda3/envs/ZIPRA_minimal

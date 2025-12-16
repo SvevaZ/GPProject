@@ -1,4 +1,4 @@
-name: geop_env
+name: ZIPRA_example
 channels:
   - conda-forge
   - defaults
@@ -385,4 +385,4 @@ dependencies:
       - webcolors==25.10.0
       - wordcloud==1.9.4
       - ydata-profiling==4.18.0
-prefix: /opt/anaconda3/envs/geop_env
+prefix: /opt/anaconda3/envs/ZIPRA_example
