@@ -1,12 +1,12 @@
 """
-Unit tests for Indices_calculation function
+Unit TESTS for Indices_calculation function
 Run with:
-    python -m unittest tests/test_indices_calculation.py
+    python -m unittest TESTS/test_indices_calculation.py
 Or:
     pip install pytest pytest-cov
-    pytest tests/test_indices_calculation.py -vv
+    pytest TESTS/test_indices_calculation.py -vv
 
-The tests cover:
+The TESTS cover:
     1. Default behavior - calculates NDVI, NBR, NDWI by default
     2. Single index - calculates only a single index
     3. Multiple indices - calculates multiple indices together
@@ -40,7 +40,7 @@ class TestIndicesCalculation(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        """Create test fixtures - runs once before all tests"""
+        """Create test fixtures - runs once before all TESTS"""
         cls.temp_dir = tempfile.mkdtemp()
         print(f"\nCreated temp directory: {cls.temp_dir}")
         
@@ -93,7 +93,7 @@ class TestIndicesCalculation(unittest.TestCase):
     
     @classmethod
     def tearDownClass(cls):
-        """Clean up test files - runs once after all tests"""
+        """Clean up test files - runs once after all TESTS"""
         import shutil
         if os.path.exists(cls.temp_dir):
             shutil.rmtree(cls.temp_dir)
@@ -387,5 +387,5 @@ class TestIndicesValues(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # Run tests with verbose output
+    # Run TESTS with verbose output
     unittest.main(verbosity=2)
