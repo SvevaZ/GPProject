@@ -2,6 +2,17 @@
 Unit TESTS for ZIPRA library
 Run with:
     python -m unittest TESTS/test.py -v
+
+Before running the test, download the zip folder from this link: https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
+and add the zip folder in TESTS/DATA_TEST
+If you want to run the test using another zip folder, you need to change the following variables in setUpClass: 
+- cls.class_list: list of the classes to be masked
+- cls.AOI: Area of interest on which to clip
+- zip_files: path and name of the zip file
+- AOI2: Area of interest on which to clip the raster that will be the input of the functions, smaller AOI2 lead to faster execution
+
+The test should take approximately 4 minutes
+
 """
 
 import unittest
@@ -29,22 +40,21 @@ class TestZipra(unittest.TestCase):
         # Predefined inputs used across multiple TESTS
         cls.class_list = [3,4,5,6]
         cls.SCL_band = 7
-      #####  # AOI valid only for zip file available at https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
+        # AOI valid only for zip file available at https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
         cls.AOI = "POLYGON ((9.500000 45.810000, 9.500000 45.900000, 9.590000 45.900000, 9.590000 45.810000, 9.500000 45.810000))"
         # Find most recent zip and safe files
-        zip_files = glob.glob("./DATA/S2*_*.zip")
+        zip_files = glob.glob("./TESTS/DATA_TEST/S2B_MSIL2A_20250917T102019_N0511_R065_T32TNR_20250917T155807.SAFE.zip")
         if zip_files:
             cls.zip_path = max(zip_files, key=os.path.getctime)
         else:
             cls.zip_path = None
 
-        #cls.tiff_all_bands="./TESTS/DATA/all_bands.tif"
         sentinel_bands = ["B02", "B03", "B04", "B08", "B11", "B12", "SCL"]
         AOI2 = "POLYGON ((9.400000 45.800000, 9.400000 46.000000, 9.600000 46.000000, 9.600000 45.800000, 9.400000 45.800000))"
         tiff_all_bands,bands= Band_extraction(cls.zip_path,sentinel_bands)
         cls.tiff_all_bands = Clip_AOI(tiff_all_bands, AOI2)
 
-        safe_files = glob.glob("./DATA/S2*_*.SAFE")
+        safe_files = glob.glob("./TESTS/DATA_TEST/S2*_*.SAFE")
         if safe_files:
             cls.safe_path = max(safe_files, key=os.path.getctime)
         else:
@@ -83,8 +93,8 @@ class TestZipra(unittest.TestCase):
 
     def test_04_band_extraction_custom_output(self):
         """Test custom band, costum output path from .SAFE folder"""
-        self.assertIsNotNone(self.safe_path, "No .SAFE folder found in ./DATA/")
-        custom_output = os.path.join("./DATA", "custom_output.tif")
+        self.assertIsNotNone(self.safe_path, "No .SAFE folder found in ./TESTS/DATA_TEST")
+        custom_output = os.path.join("./TESTS/DATA_TEST", "custom_output.tif")
         # Extract custom bands
         requested = ["B04"]
         tiff_file, bands = Band_extraction(self.safe_path, requested, custom_output)
@@ -101,7 +111,7 @@ class TestZipra(unittest.TestCase):
 
     def test_06_band_extraction_cleanup(self):
         """Test that temporary .vrt files are removed"""
-        leftover = [f for f in os.listdir("./DATA") if f.endswith(".vrt")]
+        leftover = [f for f in os.listdir("./TESTS/DATA_TEST") if f.endswith(".vrt")]
         self.assertEqual(len(leftover), 0, "No temporary .vrt files should remain")
 
     # =========================================================================
@@ -211,7 +221,7 @@ class TestZipra(unittest.TestCase):
 
     def test_14_indices_custom_output_path(self):
         """Test custom output path for indices"""
-        custom_path = "DATA/custom_indices.tif"
+        custom_path = "./TESTS/DATA_TEST/custom_indices.tif"
 
         tiff_output, calculated = Indices_calculation(
             self.tiff_all_bands,
@@ -248,7 +258,7 @@ class TestZipra(unittest.TestCase):
                 'dtype': data_subset.dtype
             })
             # Create a TIFF with only some bands (remove B11 and B12)
-            temp_incomplete = os.path.join("./TESTS/DATA", "incomplete_bands.tif")
+            temp_incomplete = os.path.join("./TESTS/DATA_TEST", "incomplete_bands.tif")
             # Write incomplete TIFF
             with rasterio.open(temp_incomplete, 'w', **meta) as dst:
                 for i in range(4):

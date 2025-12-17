@@ -19,20 +19,22 @@ This library was developed as a project for the course of Geospatial Processing 
 .
 ├── DATA
 │   └── AGGIUNGERE UN RASTER DI PROVA
+├── TESTS
+│   ├── DATA_TEST
+│   └── test.py
 ├── environment_for_EXAMPLE.yml
 ├── environment.yml
 ├── EXAMPLE.ipynb
 ├── LICENSE
 ├── minimum_working_example.py
 ├── README.md
-├── Test_ZIPRA.py
 └── ZIPRA.py
 ```
 
 Here is a brief explanation for the main files: 
 - ZIPRA.py is the python file containing the functions that compose the library
 - environment.yml is the minimum environment for the library to work 
-- Test_ZIPRA.py is the file containing the testing for the ZIPRA library
+- test.py is the file containing the testing for the ZIPRA library
 - minimum_working_example.py is a minimal script that allow to run all the functions in the library using only the minimun requirements contained in environment.yml
 - EXAMPLE.ipynb is a more exaustive example that guides the user in selecting and downloading the data, calling the functions and visualizing the results of each step.
 - environment_for_EXAMPLE.yml contains the environment to run the EXAMPLE.ipynb file
