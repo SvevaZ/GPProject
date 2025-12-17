@@ -1,5 +1,5 @@
 # Minimum working example of each class, cam be run only with the libraries in requirement.txt
-from ZIPRA import Band_estraction, Indices_calculation, Area_calculation, Clip_AOI, Mask_tiff, Barplot_classes
+from ZIPRA import Band_extraction, Indices_calculation, Area_calculation, Clip_AOI, Mask_tiff, Barplot_classes
 
 #Input to be modified
 path='DATA/S2B_MSIL2A_20250917T102019_N0511_R065_T32TNR_20250917T155807.SAFE.zip'
@@ -8,7 +8,7 @@ SCL_band=6
 AOI="POLYGON ((9.091187 45.752193, 9.091187 46.008409, 9.684448 46.008409, 9.684448 45.752193, 9.091187 45.752193))"
 
 #Band extraction
-tiff_file, band_list = Band_estraction(path)
+tiff_file, band_list = Band_extraction(path)
 print("output path",tiff_file)
 print("Band list",band_list)
 
