@@ -46,14 +46,14 @@ The project includes comprehensive unit tests for all functions.
 ### Run Tests
 ```bash
 # Using unittest
-  python -m unittest discover tests
+  python -m unittest discover TESTS
 
 # Using pytest (recommended)
   pip install pytest pytest-cov  
-  pytest tests/ -vv
+  pytest TESTS/ -vv
 
 # See full library coverage report
-  pytest tests/ --cov=ZIPRA --cov-report=html
+  pytest TESTS/ --cov=ZIPRA --cov-report=html
   open htmlcov/index.html
 ```
 

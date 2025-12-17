@@ -12,7 +12,7 @@ Supported input structures:
     - GeoTIFF files produced by this library
 
 Functions:
-    - Band_estraction: Extract and resample Sentinel-2 bands from .SAFE files
+    - Band_extraction: Extract and resample Sentinel-2 bands from .SAFE files
     - Indices_calculation: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI)
     - Area_calculation: Calculate areas for specific land cover classes
     - Clip_AOI: Clip raster to area of interest
@@ -43,8 +43,8 @@ from shapely.geometry import box
 
 #------------------------- BAND ESTRACTION -------------------------
 
-#Estrazione bande di interesse dell’utente: 
-def Band_estraction(zip_file, band_list=None, output_file=None):
+# Extraction of bands of interest:
+def Band_extraction(zip_file, band_list=None, output_file=None):
     ''' This function produces a GeoTIFF file containing the selected bands from Sentinel 2 .SAFE file.
         If no bands are provided, it extracts the bands: B02, B03, B04, B08, B12, SCL by default.
 
