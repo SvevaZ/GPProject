@@ -16,8 +16,8 @@ Functions:
     - Indices_calculation: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI)
     - Area_calculation: Calculate areas for specific land cover classes
     - Clip_AOI: Clip raster to area of interest
-    - mask_tiff: Create quality masks based on Scene Classification Layer (SCL)
-    - barplot_classes: Generate histogram of SCL class distribution
+    - Mask_tiff: Create quality masks based on Scene Classification Layer (SCL)
+    - Barplot_classes: Generate histogram of SCL class distribution
 
 Requirements:
     Please refer to the requirements.txt file in the GitHub repository
