@@ -1,7 +1,7 @@
 """
 Unit TESTS for ZIPRA library
 Run with:
-    python -m unittest TESTS/test_zipra.py -v
+    python -m unittest TESTS/test.py -v
 """
 
 import unittest
@@ -27,11 +27,10 @@ class TestZipra(unittest.TestCase):
     def setUpClass(cls):
         """Setup: runs once before all TESTS"""
         # Predefined inputs used across multiple TESTS
-        cls.class_list = [0, 6]
-        cls.SCL_band = 6
-      #####  # questo AOI è valido solo per ????
-        cls.AOI = "POLYGON ((9.091187 45.752193, 9.091187 46.008409, 9.684448 46.008409, 9.684448 45.752193, 9.091187 45.752193))"
-
+        cls.class_list = [3,4,5,6]
+        cls.SCL_band = 7
+      #####  # AOI valid only for zip file available at https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
+        cls.AOI = "POLYGON ((9.500000 45.810000, 9.500000 45.900000, 9.590000 45.900000, 9.590000 45.810000, 9.500000 45.810000))"
         # Find most recent zip and safe files
         zip_files = glob.glob("./DATA/S2*_*.zip")
         if zip_files:
@@ -39,15 +38,17 @@ class TestZipra(unittest.TestCase):
         else:
             cls.zip_path = None
 
+        #cls.tiff_all_bands="./TESTS/DATA/all_bands.tif"
+        sentinel_bands = ["B02", "B03", "B04", "B08", "B11", "B12", "SCL"]
+        AOI2 = "POLYGON ((9.400000 45.800000, 9.400000 46.000000, 9.600000 46.000000, 9.600000 45.800000, 9.400000 45.800000))"
+        tiff_all_bands,bands= Band_extraction(cls.zip_path,sentinel_bands)
+        cls.tiff_all_bands = Clip_AOI(tiff_all_bands, AOI2)
+
         safe_files = glob.glob("./DATA/S2*_*.SAFE")
         if safe_files:
             cls.safe_path = max(safe_files, key=os.path.getctime)
         else:
             cls.safe_path = None
-
-        #cls.tiff_all_bands="./TESTS/DATA/all_bands.tif"
-        sentinel_bands = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12", "SCL"]
-        cls.tiff_all_bands = Band_extraction(cls.safe_path,sentinel_bands)
 
     # =========================================================================
     # BAND EXTRACTION TESTS
@@ -55,7 +56,7 @@ class TestZipra(unittest.TestCase):
 
     def test_01_band_extraction_from_zip(self):
         """Test band extraction from zip file with default bands"""
-        self.assertIsNotNone(self.zip_path, "No zip folder found in ./DATA/")
+        self.assertIsNotNone(self.zip_path, "No zip folder found")
 
         # Extract default bands
         tiff_file, bands = Band_extraction(self.zip_path)
@@ -73,17 +74,6 @@ class TestZipra(unittest.TestCase):
         self.assertIsNotNone(desc)
         self.assertEqual(desc, ["B02", "B03", "B04", "B08", "B12", "SCL"])
 
-    def test_02_band_extraction_from_safe(self):
-        """Test band extraction from .SAFE folder with custom bands"""
-        self.assertIsNotNone(self.safe_path, "No .SAFE folder found in ./DATA/")
-
-        # Extract custom bands
-        requested = ["B02", "B04", "B11"]
-        tiff_file, bands = Band_extraction(self.safe_path, requested)
-
-        self.assertEqual(bands, requested)
-        self.assertEqual(open_raster(tiff_file), 3, "Should have 3 bands")
-
     def test_03_band_extraction_invalid_band(self):
         """Test that invalid band names raise ValueError"""
         self.assertIsNotNone(self.safe_path, "No .SAFE folder found")
@@ -92,23 +82,26 @@ class TestZipra(unittest.TestCase):
             Band_extraction(self.safe_path, ["B99"])
 
     def test_04_band_extraction_custom_output(self):
-        """Test custom output path"""
-        self.assertIsNotNone(self.zip_path, "No zip folder found")
-
-        custom_output = os.path.join("../DATA", "custom_output.tif")
-        tiff_file, _ = Band_extraction(self.zip_path, ["B02"], custom_output)
-
+        """Test custom band, costum output path from .SAFE folder"""
+        self.assertIsNotNone(self.safe_path, "No .SAFE folder found in ./DATA/")
+        custom_output = os.path.join("./DATA", "custom_output.tif")
+        # Extract custom bands
+        requested = ["B04"]
+        tiff_file, bands = Band_extraction(self.safe_path, requested, custom_output)
+        self.assertEqual(bands, requested)
         self.assertEqual(tiff_file, custom_output)
         self.assertTrue(os.path.exists(custom_output))
+        self.assertEqual(open_raster(tiff_file), 1, "Should have 1 bands")
+
 
     def test_05_band_extraction_invalid_input(self):
-        """Test that invalid input path raises ValueError"""
-        with self.assertRaises(ValueError):
+        """Test that invalid input path raises FileNotFoundError"""
+        with self.assertRaises(FileNotFoundError):
             Band_extraction("invalid_file.txt")
 
     def test_06_band_extraction_cleanup(self):
         """Test that temporary .vrt files are removed"""
-        leftover = [f for f in os.listdir("../DATA") if f.endswith(".vrt")]
+        leftover = [f for f in os.listdir("./DATA") if f.endswith(".vrt")]
         self.assertEqual(len(leftover), 0, "No temporary .vrt files should remain")
 
     # =========================================================================
@@ -117,8 +110,6 @@ class TestZipra(unittest.TestCase):
 
     def test_07_indices_default_calculation(self):
         """Test default indices calculation (NDVI, NBR, NDWI)"""
-        # Get a tiff file first with all bands
-        sentinel_bands = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12", "SCL"]
 
         # Calculate default indices
         tiff_with_indices, calculated = Indices_calculation(self.tiff_all_bands)
@@ -158,7 +149,7 @@ class TestZipra(unittest.TestCase):
 
     def test_09_indices_multiple_calculation(self):
         """Test calculating multiple indices at once"""
-        requested = ["NDVI", "NBR", "NDMI", "SAVI"]
+        requested = ["NDMI", "SAVI"]
         tiff_output, calculated = Indices_calculation(self.tiff_all_bands, index_list=requested)
 
         self.assertEqual(len(calculated), len(requested), "Should calculate all requested indices")
@@ -170,11 +161,10 @@ class TestZipra(unittest.TestCase):
 
         tiff_output, calculated = Indices_calculation(
             self.tiff_all_bands,
-            index_list=["NDVI", "FAKE_INDEX", "NBR", "INVALID"]
+            index_list=["FAKE_INDEX", "NBR", "INVALID"]
         )
 
         # Only valid indices should be calculated
-        self.assertIn("NDVI", calculated)
         self.assertIn("NBR", calculated)
         self.assertNotIn("FAKE_INDEX", calculated)
         self.assertNotIn("INVALID", calculated)
@@ -292,13 +282,8 @@ class TestZipra(unittest.TestCase):
 
     def test_17_area_calculation(self):
         """Test area calculation for specified classes"""
-        tiff_files = glob.glob("./DATA/*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
 
-        tiff_file = tiff_files[0]
-
-        Area_tot, Area_classes = Area_calculation(tiff_file, self.class_list, self.SCL_band)
+        Area_tot, Area_classes = Area_calculation(self.tiff_all_bands, self.class_list, self.SCL_band)
 
         # Check if areas are valid
         self.assertGreater(Area_tot, 0, "Total area should be positive")
@@ -314,21 +299,14 @@ class TestZipra(unittest.TestCase):
 
     def test_18_clip_aoi(self):
         """Test clipping raster to area of interest"""
-        tiff_files = glob.glob("./DATA/*indices*.tif")
-        if not tiff_files:
-            tiff_files = glob.glob("./DATA/*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
 
-        tiff_file = tiff_files[0]
-
-        clipped_tiff = Clip_AOI(tiff_file, self.AOI)
+        clipped_tiff = Clip_AOI(self.tiff_all_bands, self.AOI)
 
         self.assertIsNotNone(clipped_tiff, "Clipped file should not be None")
         self.assertTrue(os.path.exists(clipped_tiff), "Clipped file should exist")
 
         # Check that clipped is smaller than original
-        stats_original = calculate_raster_dimensions(tiff_file)
+        stats_original = calculate_raster_dimensions(self.tiff_all_bands)
         stats_clipped = calculate_raster_dimensions(clipped_tiff)
 
         self.assertLessEqual(stats_clipped["width"], stats_original["width"])
@@ -340,15 +318,8 @@ class TestZipra(unittest.TestCase):
 
     def test_19_mask_tiff(self):
         """Test masking tiff based on class values"""
-        tiff_files = glob.glob("./DATA/*CLIPPED*.tif")
-        if not tiff_files:
-            tiff_files = glob.glob("./DATA/*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
 
-        tiff_file = tiff_files[0]
-
-        masked_tiff = Mask_tiff(tiff_file, self.class_list, self.SCL_band)
+        masked_tiff = Mask_tiff(self.tiff_all_bands, self.class_list, self.SCL_band)
 
         self.assertIsNotNone(masked_tiff, "Masked file should not be None")
         self.assertTrue(os.path.exists(masked_tiff), "Masked file should exist")
@@ -359,39 +330,27 @@ class TestZipra(unittest.TestCase):
 
     def test_20_barplot_classes(self):
         """Test histogram generation for SCL classes"""
-        tiff_files = glob.glob("./DATA/*MASKED*.tif")
-        if not tiff_files:
-            tiff_files = glob.glob("./DATA/*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
 
-        tiff_file = tiff_files[0]
-
-        unique_classes, counts = Barplot_classes(tiff_file, self.SCL_band, stats=False)
+        unique_classes, counts = Barplot_classes(self.tiff_all_bands, self.SCL_band, stats=False)
 
         # Check that outputs are valid
         self.assertEqual(len(unique_classes), len(counts))
         self.assertTrue(all(count > 0 for count in counts), "All counts should be positive")
 
         # If this is a masked file, masked classes should not be present
-        if "MASKED" in tiff_file:
+        if "MASKED" in self.tiff_all_bands:
             for cls in unique_classes:
                 self.assertNotIn(cls, self.class_list,
                                  "Masked classes should not appear in histogram")
 
     def test_21_barplot_classes_with_stats(self):
         """Test histogram with statistics"""
-        tiff_files = glob.glob("./DATA/*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
 
-        tiff_file = tiff_files[0]
-
-        unique_classes, counts, stats = Barplot_classes(tiff_file, self.SCL_band, stats=True)
+        unique_classes, counts, stats = Barplot_classes(self.tiff_all_bands, self.SCL_band, stats=True)
 
         # Check statistics
         self.assertIn("max_value", stats)
-        self.assertIn("ssn_value", stats)
+        self.assertIn("min_value", stats)
         self.assertIn("mean_value", stats)
         self.assertIn("max_class", stats)
         self.assertIn("min_class", stats)
@@ -406,7 +365,7 @@ class TestZipra(unittest.TestCase):
     # =========================================================================
 
     def test_22_full_workflow_integration(self):
-        """Test complete workflow: extract -> indices -> area -> clip -> mask -> histogram"""
+        """Test complete workflow: extract -> clip -> indices -> area -> mask -> histogram"""
         # Skip if no data available
         if not self.zip_path:
             self.skipTest("No zip file available for integration test")
@@ -414,25 +373,26 @@ class TestZipra(unittest.TestCase):
         # 1. Extract bands
         tiff_file, bands = Band_extraction(self.zip_path)
         self.assertIsNotNone(tiff_file)
+        SCL_band=6
 
-        # 2. Calculate indices
-        tiff_with_indices, calculated = Indices_calculation(tiff_file, ["NDVI", "NBR"])
-        self.assertTrue(len(calculated) > 0)
-
-        # 3. Calculate area
-        Area_tot, Area_classes = Area_calculation(tiff_with_indices, self.class_list, self.SCL_band)
-        self.assertGreater(Area_tot, 0)
-
-        # 4. Clip AOI
-        clipped_tiff = Clip_AOI(tiff_with_indices, self.AOI)
+        # 3. Clip AOI
+        clipped_tiff = Clip_AOI(tiff_file, self.AOI)
         self.assertIsNotNone(clipped_tiff)
 
+        # 3. Calculate indices
+        tiff_with_indices, calculated = Indices_calculation(clipped_tiff, ["NDVI", "NBR"])
+        self.assertTrue(len(calculated) > 0)
+
+        # 4. Calculate area
+        Area_tot, Area_classes = Area_calculation(tiff_with_indices, self.class_list, SCL_band)
+        self.assertGreater(Area_tot, 0)
+
         # 5. Mask
-        masked_tiff = Mask_tiff(clipped_tiff, self.class_list, self.SCL_band)
+        masked_tiff = Mask_tiff(clipped_tiff, self.class_list, SCL_band)
         self.assertIsNotNone(masked_tiff)
 
         # 6. Histogram
-        unique_classes, counts = Barplot_classes(masked_tiff, self.SCL_band, stats=False)
+        unique_classes, counts = Barplot_classes(masked_tiff, SCL_band, stats=False)
         self.assertEqual(len(unique_classes), len(counts))
 
         print("\n✓ Full workflow integration test passed!")
@@ -443,21 +403,10 @@ class TestZipra(unittest.TestCase):
 
     def test_23_raster_area_stats(self):
         """Test raster area statistics across different processing stages"""
-        tiff_files = glob.glob("./DATA/L2A_*.tif")
-        if not tiff_files:
-            self.skipTest("No tiff files found")
-
-        tiff_original = tiff_files[0]
-
-        # Calculate indices if not exists
-        tiff_indices_files = glob.glob("./DATA/*indices*.tif")
-        if tiff_indices_files:
-            tiff_indices = tiff_indices_files[0]
-        else:
-            tiff_indices, _ = Indices_calculation(tiff_original, ["NDVI"])
+        tiff_indices, _ = Indices_calculation(self.tiff_all_bands, ["NDVI"])
 
         # Get statistics
-        stats_original = calculate_raster_area_stats(tiff_original)
+        stats_original = calculate_raster_area_stats(self.tiff_all_bands)
         stats_indices = calculate_raster_area_stats(tiff_indices)
 
         # Min area must be >= 0

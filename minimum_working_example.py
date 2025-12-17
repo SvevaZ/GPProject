@@ -18,7 +18,6 @@ print(f"Indices calculated: {calculated}")
 print(f"Output file: {tiff_with_indices}")
 
 #Area calculation
-tiff_file="DATA/L2A_T32TNR_A044564_20250917T102153.tif"
 Area_tot, Area_classes = Area_calculation(tiff_file, class_list, SCL_band)
 print("Area_tot",Area_tot)
 print("Area_classes",Area_classes)
