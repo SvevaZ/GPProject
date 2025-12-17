@@ -263,8 +263,8 @@ def Indices_calculation(tiff_file, index_list=None, output_file=None):
                 if name not in band_map:
                     raise ValueError(f"Band {name} not found in the raster.")
                 b = data[band_map[name]-1].astype('float32')
-                b[b==0] = np.nan
                 return b
+
             # If needed bands are missing, exclude the index from calculation
             for idx in index_list:
                 needed = reqs[idx]
