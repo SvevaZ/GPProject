@@ -2,6 +2,8 @@
 Script to execute the tests with coverage report
 Run from main project GPProject/:
     python tests/run_coverage.py
+
+Coverage Report: 78%
 """
 
 import subprocess
@@ -51,6 +53,7 @@ print()
 cmd = [
     sys.executable,
     "-m", "coverage", "run",
+    "--omit=tests/*",
     "-m", "unittest", "discover",
     "-s", "tests",
     "-p", "test.py",

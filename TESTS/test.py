@@ -1,18 +1,17 @@
-"""
-Unit TESTS for ZIPRA library
+""" Unit TESTS for ZIPRA library
 Run with:
     python -m unittest TESTS/test.py -v
 
-Before running the test, download the zip folder from this link: https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
-and add the zip folder in TESTS/DATA_TEST
+1) Before running the test, download the zip folder from this link:
+    https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
+2) Add the zip folder in TESTS/DATA_TEST
+The tests should take approximately 4 minutes
+
 If you want to run the test using another zip folder, you need to change the following variables in setUpClass: 
-- cls.class_list: list of the classes to be masked
-- cls.AOI: Area of interest on which to clip
-- zip_files: path and name of the zip file
-- AOI2: Area of interest on which to clip the raster that will be the input of the functions, smaller AOI2 lead to faster execution
-
-The test should take approximately 4 minutes
-
+    - cls.class_list: list of the classes to be masked
+    - cls.AOI: Area of interest on which to clip
+    - zip_files: path and name of the zip file
+    - AOI2: Area of interest on which to clip the raster that will be the input of the functions, smaller AOI2 lead to faster execution
 """
 
 import unittest
