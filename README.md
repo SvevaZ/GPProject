@@ -22,12 +22,13 @@ This library was developed as a project for the course of Geospatial Processing 
 │   └── minimum_working_example.py
 │   └── environment_for_EXAMPLE.yml
 │   └── DATA 
-│       └── (zip file to be downloaded by the user)
+│       └── (zip file to be downloaded and added by the user)
 ├── TESTS
 │   ├── __init__.py
 │   └── test.py
 │   └── run_coverage.py
 │   └── DATA_TEST
+│       └── (zip file to be downloaded and added by the user)
 ├── environment.yml
 ├── LICENSE
 ├── README.md
