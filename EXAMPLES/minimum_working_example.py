@@ -1,21 +1,23 @@
 """ THIS IA THE MINIMUM WORKING EXAMPLE OF THE ZIPRA LIBRARY
 
-It can be run only with the libraries in environment_for_EXAMPLE.yml
+It can be run just with the libraries in environmen.yml
+
 1) To create this environment, please run the following command in the terminal:
-    conda env create -f EXAMPLES/environment_for_EXAMPLE.yml
+    conda env create -f environment.yml
+
 2) After it finished, to activate the environment, run the following command:
-    conda activate ZIPRA_example
+    conda activate ZIPRA_minimal
 
 3) Before running the example, download the zip folder from this link:
     https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
-    or use custom zip file
-4) Create a folder named DATA and add only the zip folder in it.
-.
-├── EXAMPLES
-│   └── EXAMPLE.ipynb
-│   └── minimum_working_example.py
-│   └── environment_for_EXAMPLE.yml
-│   └── DATA (folder to be created by the user)
+    and add it to EXAMPLES/DATA
+    As an alternative, the user can use his own zip folder, but it also need to update the following variables: 
+    -path
+    -class_list
+    -AOI
+
+4) The script can be run with:
+    python EXAMPLES/minimum_working_example.py
 
 """
 # Add project root to sys.path
