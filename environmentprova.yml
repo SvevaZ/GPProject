@@ -1,0 +1,16 @@
+name: geop_env
+channels:
+  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - jupyter
+  - python
+  - geopandas
+  - matplotlib
+  - rasterio
+  - git
+  - gdal
+  - leafmap
+  - localtileserver
+prefix: /opt/anaconda3/envs/geop_env
