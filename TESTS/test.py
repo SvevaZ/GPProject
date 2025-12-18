@@ -43,8 +43,14 @@ class TestZipra(unittest.TestCase):
         cls.AOI = "POLYGON ((9.500000 45.810000, 9.500000 45.900000, 9.590000 45.900000, 9.590000 45.810000, 9.500000 45.810000))"
         # Find most recent zip and safe files
         zip_files = glob.glob("./TESTS/DATA_TEST/S2B_MSIL2A_20250917T102019_N0511_R065_T32TNR_20250917T155807.SAFE.zip")
+
         if zip_files:
-            cls.zip_path = max(zip_files, key=os.path.getctime)
+            zip_path = max(zip_files, key=os.path.getctime)
+
+            zip_path = os.path.abspath(zip_path)
+            zip_path = os.path.normpath(zip_path)
+            
+            cls.zip_path = zip_path
         else:
             cls.zip_path = None
 

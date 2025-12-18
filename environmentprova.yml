@@ -1,16 +1,14 @@
 name: geop_env
 channels:
-  - defaults
-  - https://repo.anaconda.com/pkgs/main
-  - https://repo.anaconda.com/pkgs/r
+  - conda-forge
 dependencies:
-  - jupyter
-  - python
+  - python=3.13.7
+  - gdal=3.6.2
+  - rasterio=1.4.3
+  - openjpeg
   - geopandas
   - matplotlib
-  - rasterio
+  - jupyter
   - git
-  - gdal
   - leafmap
   - localtileserver
-prefix: /opt/anaconda3/envs/geop_env
