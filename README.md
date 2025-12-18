@@ -17,16 +17,19 @@ This library was developed as a project for the course of Geospatial Processing 
 
 ```
 .
-├── DATA
-│   └── AGGIUNGERE UN RASTER DI PROVA
+├── EXAMPLES
+│   └── EXAMPLE.ipynb
+│   └── minimum_working_example.py
+│   └── environment_for_EXAMPLE.yml
+│   └── DATA 
+│       └── (zip file to be downloaded by the user)
 ├── TESTS
-│   ├── DATA_TEST
+│   ├── __init__.py
 │   └── test.py
-├── environment_for_EXAMPLE.yml
+│   └── run_coverage.py
+│   └── DATA_TEST
 ├── environment.yml
-├── EXAMPLE.ipynb
 ├── LICENSE
-├── minimum_working_example.py
 ├── README.md
 └── ZIPRA.py
 ```
@@ -97,18 +100,13 @@ Section 2 can be run using the file downloaded from Section 1, or the example fi
 
 The project includes comprehensive unit tests for all functions.
 
-### Run Tests
+Run the followings commands from the main repository:
 ```bash
 # Using unittest
-  python -m unittest discover TESTS
-
-# Using pytest (recommended)
-  pip install pytest pytest-cov  
-  pytest TESTS/ -vv
+  python -m unittest TESTS/test.py -v
 
 # See full library coverage report
-  pytest TESTS/ --cov=ZIPRA --cov-report=html
-  open htmlcov/index.html
+  python tests/run_coverage.py
 ```
 
 ## Authors
