@@ -1,4 +1,24 @@
-# Minimum working example of each class, cam be run only with the libraries in requirement.txt
+""" THIS IA THE MINIMUM WORKING EXAMPLE OF THE ZIPRA LIBRARY
+
+It can be run only with the libraries in environment_for_EXAMPLE.yml
+1) To create this environment, please run the following command in the terminal:
+    conda env create -f EXAMPLES/environment_for_EXAMPLE.yml
+2) After it finished, to activate the environment, run the following command:
+    conda activate ZIPRA_example
+
+3) Before running the example, download the zip folder from this link:
+    https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing
+    or use custom zip file
+4) Create a folder named DATA and add only the zip folder in it.
+.
+├── EXAMPLES
+│   └── EXAMPLE.ipynb
+│   └── minimum_working_example.py
+│   └── environment_for_EXAMPLE.yml
+│   └── DATA (folder to be created by the user)
+
+"""
+
 from ZIPRA import Band_extraction, Indices_calculation, Area_calculation, Clip_AOI, Mask_tiff, Barplot_classes
 
 #Input to be modified
