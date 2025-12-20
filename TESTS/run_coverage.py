@@ -89,30 +89,65 @@ print("Tests completed successfully!")
 print("=" * 70)
 print()
 print("HTML coverage report: htmlcov/index.html")
-print()
-print("To view:")
-print("  macOS:   open htmlcov/index.html")
-print("  Windows: start htmlcov\\index.html")
-print("  Linux:   xdg-open htmlcov/index.html")
-print()
+
 
 # Try to open automatically
 
 import webbrowser
 import os.path
 
+manually = False # Flag to indicate if manual instructions are needed
+
 report_path = os.path.join(os.getcwd(), "htmlcov", "index.html")
 
 if os.path.exists(report_path):
     print("Opening coverage report in browser...")
+
     try:
-        opened = webbrowser.open(f"file://{report_path}")
-        if not opened:
-            print("Could not open automatically. Try opening manually:")
-            print(report_path)
+        if sys.platform.startswith("win"):  # ✅ Windows
+            url = "file:///" + report_path.replace("\\", "/")
+
+            browsers = [
+                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                r"C:\Program Files\Mozilla Firefox\firefox.exe"]
+
+            opened = False
+
+            for path in browsers:
+                if os.path.exists(path):
+                    try:
+                        webbrowser.get(f'"{path}" %s').open(url)
+                        print(f"Opened with: {path}")
+                        opened = True
+                        break
+                    except Exception as e:
+                        pass
+
+            if not opened:
+                print("Could not open automatically.")
+                print("Open manually:", url)
+
+
+        elif sys.platform == "darwin":
+            webbrowser.open_new_tab(url)   # ✅ macOS
+        else:
+            webbrowser.open_new_tab(url)   # ✅ Linux
+
     except Exception as e:
         print(f"Error opening browser: {e}")
-        print("Open manually:")
-        print(report_path)
+        print("Open manually:", report_path)
+        manually = True
 else:
     print("Coverage HTML report not found. Generate it first.")
+
+# Instructions to open manually
+manually=True
+if manually:
+    print()
+    print("To view manually:")
+    print("  macOS:   open htmlcov/index.html")
+    print("  Linux:   xdg-open htmlcov/index.html")
+    print(f" Windows (cmd.exe): start <browser_name> \"{report_path}\"")
+    print("           Examples: start chrome ..., start msedge ..., start firefox ...")
+    print()
