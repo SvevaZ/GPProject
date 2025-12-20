@@ -142,7 +142,6 @@ else:
     print("Coverage HTML report not found. Generate it first.")
 
 # Instructions to open manually
-manually=True
 if manually:
     print()
     print("To view manually:")
