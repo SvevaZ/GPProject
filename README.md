@@ -97,6 +97,9 @@ Section 2 can be run using the file downloaded from Section 1, or the example fi
 - Generate and visualize SCL distribution histograms
 - Visualizing results on interactive maps
 
+ > [!NOTE]  
+> If you encounter a GDAL disk space error despite having sufficient space, set the temp directory with more space using `os.environ['TMPDIR'] = '/path/to/directory'` or disable the check with `gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'FALSE')`.
+
 ## 6. Testing
 
 The project includes comprehensive unit tests for all functions.
