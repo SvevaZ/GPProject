@@ -25,7 +25,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ZIPRA import Band_extraction, Indices_calculation, Area_calculation, Clip_AOI, Mask_tiff, Barplot_classes
 
-# Input to be modified
+# If not using link data, modify these inputs
 path='DATA/S2B_MSIL2A_20250917T102019_N0511_R065_T32TNR_20250917T155807.SAFE.zip'
 class_list=[0,6]
 SCL_band=6
