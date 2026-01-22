@@ -1,0 +1,15 @@
+name: zipra_env2
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - gdal=3.6.2
+  - rasterio=1.4.3
+  - libnetcdf=4.8.1
+  - openjpeg
+  - geopandas
+  - matplotlib
+  - jupyter
+  - git
+  - leafmap
+  - localtileserver
