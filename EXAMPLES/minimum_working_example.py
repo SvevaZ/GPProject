@@ -36,11 +36,6 @@ tiff_file, band_list = Band_extraction(path)
 print("output path",tiff_file)
 print("Band list",band_list)
 
-# Area calculation
-Area_tot, Area_classes = Area_calculation(tiff_file, class_list, SCL_band)
-print("Area_tot",Area_tot)
-print("Area_classes",Area_classes)
-
 # Clip AOI
 clipped_tiff = Clip_AOI(tiff_file, AOI) 
 print("Clipped raster data path:", clipped_tiff)
@@ -49,6 +44,11 @@ print("Clipped raster data path:", clipped_tiff)
 tiff_with_indices, calculated = Indices_calculation(clipped_tiff)
 print(f"Indices calculated: {calculated}")
 print(f"Output file: {tiff_with_indices}")
+
+# Area calculation
+Area_tot, Area_classes = Area_calculation(clipped_tiff, class_list, SCL_band)
+print("Area_tot",Area_tot)
+print("Area_classes",Area_classes)
 
 # Mask tiff
 masked_tiff = Mask_tiff(clipped_tiff,class_list,SCL_band)

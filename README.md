@@ -3,9 +3,9 @@ ZIPRA is a Python library for extracting, processing and analyzing Sentinel-2 L2
 The library provides tools to:
 
 - Extract specific spectral bands from Sentinel-2 `.SAFE` files
+- Clip rasters to areas of interest (AOI)
 - Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, SAVI, EVI)
 - Calculate land cover areas for specific classes
-- Clip rasters to areas of interest (AOI)
 - Mask pixels based on Scene Classification Layer (SCL) band
 - Generate SCL distribution histograms
 
@@ -49,9 +49,9 @@ Here is a brief explanation for the main files:
 ## 2. ZIPRA Functions
 
 - **Band_estraction**: Extract and resample to a common 10m resolution Sentinel-2 bands from .SAFE folder
+- **Clip_AOI**: Clip raster to area of interest
 - **Indices_calculation**: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, SAVI, and EVI)
 - **Area_calculation**: Calculate areas for specific land cover classes
-- **Clip_AOI**: Clip raster to area of interest
 - **Mask_tiff**: Masks pixels based on SCL classification (clouds, shadows, etc.)
 - **Barplot_classes**: Generate histograms showing SCL class distribution
 
@@ -94,6 +94,7 @@ Section 1 inlcudes:
 - Downloading data from Copernicus Data Space
 
 Section 2 can be run using the file downloaded from Section 1, or the example file provided at this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing). It includes:
+- Clipping to area of interest
 - Extracting bands and calculating indices
 - Creating masks and calculating areas
 - Generate and visualize SCL distribution histograms
