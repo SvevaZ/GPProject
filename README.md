@@ -59,7 +59,7 @@ Here is a brief explanation for the main files:
 
 A minimal environment can be created with
 ```
-conda env create -f environment_minimal.yml
+conda env create --file environment_minimal.yml
 ```
 and then activated with 
 ```
@@ -67,7 +67,7 @@ conda activate zipra_minimal
 ```
 A more extensive environment, including libraries for the visualization of the results, can be created using 
 ```
-conda env create -f EXAMPLES/environment_EXAMPLE.yml
+conda env create --file EXAMPLES/environment_EXAMPLE.yml
 ```
 and then activated with 
 ```
