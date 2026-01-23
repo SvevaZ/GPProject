@@ -1,4 +1,4 @@
-name: zipra_env2
+name: zipra_minimal
 channels:
   - conda-forge
 dependencies:
@@ -8,8 +8,4 @@ dependencies:
   - libnetcdf=4.8.1
   - openjpeg
   - geopandas
-  - matplotlib
-  - jupyter
-  - git
-  - leafmap
   - localtileserver

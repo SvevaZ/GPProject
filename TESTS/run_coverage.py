@@ -3,7 +3,7 @@ Script to execute the tests with coverage report
 Run from main project GPProject/:
     python TESTS/run_coverage.py
 
-Coverage Report: 78%
+Coverage Report: 79%
 """
 
 import subprocess

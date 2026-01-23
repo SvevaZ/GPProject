@@ -18,18 +18,20 @@ This library was developed as a project for the course of Geospatial Processing 
 ```
 .
 ├── EXAMPLES
-│   └── EXAMPLE.ipynb
+│   ├── DATA 
+│   │   └── (zip file to be downloaded and added by the user)
+│   ├── environment_EXAMPLE.yml
+│   ├── EXAMPLE.ipynb
 │   └── minimum_working_example.py
-│   └── environment_for_EXAMPLE.yml
-│   └── DATA 
-│       └── (zip file to be downloaded and added by the user)
+│   
 ├── TESTS
 │   ├── __init__.py
 │   └── test.py
 │   └── run_coverage.py
 │   └── DATA_TEST
 │       └── (zip file to be downloaded and added by the user)
-├── environment.yml
+│
+├── environment_minimal.yml
 ├── LICENSE
 ├── README.md
 └── ZIPRA.py
@@ -37,11 +39,11 @@ This library was developed as a project for the course of Geospatial Processing 
 
 Here is a brief explanation for the main files: 
 - ZIPRA.py is the python file containing the functions that compose the library
-- environment.yml is the minimum environment for the library to work 
+- environment_minimal.yml is the minimum environment for the library to work 
 - test.py is the file containing the testing for the ZIPRA library
-- minimum_working_example.py is a minimal script that allow to run all the functions in the library using only the minimun requirements contained in environment.yml
+- minimum_working_example.py is a minimal script that allow to run all the functions in the library using only the minimun requirements contained in environment_minimal.yml
 - EXAMPLE.ipynb is a more exaustive example that guides the user in selecting and downloading the data, calling the functions and visualizing the results of each step.
-- environment_for_EXAMPLE.yml contains the environment to run the EXAMPLE.ipynb file
+- environment_EXAMPLE.yml contains the environment to run the EXAMPLE.ipynb file
 
 
 ## 2. ZIPRA Functions
@@ -57,19 +59,19 @@ Here is a brief explanation for the main files:
 
 A minimal environment can be created with
 ```
-conda env create -f environment.yml
+conda env create -f environment_minimal.yml
 ```
 and then activated with 
 ```
-conda activate ZIPRA_minimal
+conda activate zipra_minimal
 ```
 A more extensive environment, including libraries for the visualization of the results, can be created using 
 ```
-conda env create -f environment_for_EXAMPLE.yml
+conda env create -f environment_EXAMPLE.yml
 ```
 and then activated with 
 ```
-conda activate ZIPRA_example
+conda activate zipra_for_EXAMPLE
 ```
 
 
