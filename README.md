@@ -67,7 +67,7 @@ conda activate zipra_minimal
 ```
 A more extensive environment, including libraries for the visualization of the results, can be created using 
 ```
-conda env create -f environment_EXAMPLE.yml
+conda env create -f EXAMPLES/environment_EXAMPLE.yml
 ```
 and then activated with 
 ```
@@ -84,7 +84,7 @@ EXAMPLE.ipynb starts with a guide on how to download data, the user needs to:
 2. Get OAuth credentials following [this guide](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Overview/Authentication.html)
 3. Use the OData API provided by Copernicus to search and download Sentinel-2 products [OData](https://documentation.dataspace.copernicus.eu/APIs/OData.html)
 
-We decided to provide this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing) to let the user download a zip folder that can be used to test the functionalities of the library even without credentials.
+As an alternative, we decided to provide this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing) to let the user download a zip folder that can be used to test the functionalities of the library even without credentials.
 
 ## 5. Take a look at the Example Notebook
 
@@ -112,7 +112,7 @@ Run the followings commands from the main repository:
   python -m unittest TESTS/test.py -v
 
 # See full library coverage report
-  python tests/run_coverage.py
+  python TESTS/run_coverage.py
 ```
 
 ## Authors
