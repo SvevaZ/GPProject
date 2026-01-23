@@ -537,7 +537,15 @@ def Barplot_classes(tiff_file, SCL_band, stats = False):
         with rasterio.open(tiff_file) as src:
             
             class_value = src.read(SCL_band)  # Read band SCL
+            class_value[class_value == -9999] = np.nan # Exclude NoData values (masked pixels)
             unique_classes, counts = np.unique(class_value, return_counts=True) #to be used for the plot
+            # To not add NaN to the output classes
+            if np.isnan(unique_classes).any():
+                mask = ~np.isnan(unique_classes)
+                unique_classes = unique_classes[mask]
+                counts = counts[mask]
+
+            unique_classes = unique_classes.astype(int)
 
         if stats:
             # count pixel for each class

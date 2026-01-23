@@ -56,5 +56,5 @@ print("Masked tiff file path:", masked_tiff)
 
 # Barplot classes
 unique_classes, counts = Barplot_classes(masked_tiff, SCL_band, False)
-print("unique_classes",unique_classes)
-print("counts",counts)
+print("Unique classes:",unique_classes)
+print("Counts for each class:",counts)
