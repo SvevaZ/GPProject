@@ -1,5 +1,5 @@
 # ZIPRA - ZIP Raster Analysis
-ZIPRA is a Python library for extracting, processing and analyzing Sentinel-2 L2A satellite imagery directly from `.SAFE` zip files.
+ZIPRA is a Python library for extracting, processing and analyzing Sentinel-2 L2A satellite images directly from the `.SAFE` zip file provided by Copernicus Dataspace.
 The library provides tools to:
 
 - Extract specific spectral bands from Sentinel-2 `.SAFE` files
@@ -18,20 +18,18 @@ This library was developed as a project for the course of Geospatial Processing 
 ```
 .
 ├── EXAMPLES
-│   ├── DATA 
-│   │   └── (zip file to be downloaded and added by the user)
-│   ├── environment_EXAMPLE.yml
 │   ├── EXAMPLE.ipynb
-│   └── minimum_working_example.py
+│   ├── minimum_working_example.py
+│   └── DATA 
+│      └── (zip file to be downloaded and added by the user)
 │   
 ├── TESTS
-│   ├── __init__.py
-│   └── test.py
-│   └── run_coverage.py
+│   ├── test.py
+│   ├── run_coverage.py
 │   └── DATA_TEST
 │       └── (zip file to be downloaded and added by the user)
 │
-├── environment_minimal.yml
+├── environment.yml
 ├── LICENSE
 ├── README.md
 └── ZIPRA.py
@@ -39,18 +37,19 @@ This library was developed as a project for the course of Geospatial Processing 
 
 Here is a brief explanation for the main files: 
 - ZIPRA.py is the python file containing the functions that compose the library
-- environment_minimal.yml is the minimum environment for the library to work 
+- environment.yml is the minimum environment for the library to work 
 - test.py is the file containing the testing for the ZIPRA library
-- minimum_working_example.py is a minimal script that allow to run all the functions in the library using only the minimun requirements contained in environment_minimal.yml
+- run_coverage.py executes the tests and produces an html coverage report
+- minimum_working_example.py is a minimal script that allows to run all the functions in the library using only the minimun requirements contained in environment.yml
 - EXAMPLE.ipynb is a more exaustive example that guides the user in selecting and downloading the data, calling the functions and visualizing the results of each step.
-- environment_EXAMPLE.yml contains the environment to run the EXAMPLE.ipynb file
+
 
 
 ## 2. ZIPRA Functions
 
 - **Band_estraction**: Extract and resample to a common 10m resolution Sentinel-2 bands from .SAFE folder
 - **Clip_AOI**: Clip raster to area of interest
-- **Indices_calculation**: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, SAVI, and EVI)
+- **Indices_calculation**: Calculate and add to the raster vegetation and water indices (NDVI, NBR, NDWI, NDMI, SAVI, and EVI)
 - **Area_calculation**: Calculate areas for specific land cover classes
 - **Mask_tiff**: Masks pixels based on SCL classification (clouds, shadows, etc.)
 - **Barplot_classes**: Generate histograms showing SCL class distribution
@@ -59,22 +58,12 @@ Here is a brief explanation for the main files:
 
 A minimal environment can be created with
 ```
-conda env create --file environment_minimal.yml
+conda env create --file environment.yml
 ```
 and then activated with 
 ```
 conda activate zipra_minimal
 ```
-A more extensive environment, including libraries for the visualization of the results, can be created using 
-```
-conda env create --file EXAMPLES/environment_EXAMPLE.yml
-```
-and then activated with 
-```
-conda activate zipra_for_EXAMPLE
-```
-
-
 
 ## 4. How to Get Sentinel-2 Data
 
@@ -85,23 +74,29 @@ EXAMPLE.ipynb starts with a guide on how to download data, the user needs to:
 3. Use the OData API provided by Copernicus to search and download Sentinel-2 products [OData](https://documentation.dataspace.copernicus.eu/APIs/OData.html)
 
 As an alternative, we decided to provide this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing) to let the user download a zip folder that can be used to test the functionalities of the library even without credentials.
+This zip file can be downloaded (not decompressed) and added to the EXAMPLE/DATA folder to run the example scripts or to the TESTS/DATA_TEST to run the testing.
 
 ## 5. Take a look at the Example Notebook
 
 Check `EXAMPLE.ipynb` for a complete workflow.
+
 Section 1 inlcudes:
 - Searching for Sentinel-2 products using OData API
 - Downloading data from Copernicus Data Space
 
-Section 2 can be run using the file downloaded from Section 1, or the example file provided at this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing). It includes:
+Section 2 can be run starting with the Band_estraction function that extracts the selected bands from the zip file downloaded from Section 1, or from the example zip file provided at this [link](https://drive.google.com/file/d/1Yh5_nq14b_3w7SyETg617H_ub_iVAI1c/view?usp=sharing). 
+Some examples of output files can be found at this [link](https://drive.google.com/drive/folders/1R9XUTb-SheJIdrhqcvWilqDi0I2_r_T-?usp=sharing) and can be used as input for the other functions in the library.
+
+Section 2 includes:
+- Extracting bands 
 - Clipping to area of interest
-- Extracting bands and calculating indices
+- Calculating indices
 - Creating masks and calculating areas
 - Generate and visualize SCL distribution histograms
 - Visualizing results on interactive maps
 
- > [!NOTE]  
-> If you encounter a GDAL disk space error despite having sufficient space, set the temp directory with more space using `os.environ['TMPDIR'] = '/path/to/directory'` or disable the check with `gdal.SetConfigOption('CHECK_DISK_FREE_SPACE', 'FALSE')`.
+ > [!WARNING]  
+> Since the zip file provided by Copernicus is quite heavy (around 1 GB) it may happen that there isn't enough free space on the disk. Please make sure to have enough free space before running the functions of the library.
 
 ## 6. Testing
 
