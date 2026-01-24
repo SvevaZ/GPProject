@@ -13,16 +13,15 @@ Supported input structures:
 
 Functions:
     - Band_extraction: Extract and resample Sentinel-2 bands from .SAFE files
-        - Clip_AOI: Clip raster to area of interest
+    - Clip_AOI: Clip raster to area of interest
     - Indices_calculation: Calculate vegetation and water indices (NDVI, NBR, NDWI, NDMI, NDBI, SAVI, EVI)
     - Area_calculation: Calculate areas for specific land cover classes
     - Mask_tiff: Create quality masks based on Scene Classification Layer (SCL)
     - Barplot_classes: Generate histogram of SCL class distribution
 
 Requirements:
-    Please refer to the requirements.txt file in the GitHub repository
+    Please refer to the environment.yml file in the GitHub repository
     for the complete and up-to-date list of dependencies needed to run this project.
-    - Python, GDAL, rasterio, numpy, pandas, shapely, geopandas
 
 Authors: Sveva, Cristina, Silvia
 Version: 1.0
@@ -174,7 +173,7 @@ def Band_extraction(zip_file, band_list=None, output_file=None):
 # default output path is "clipped_image.tif"
 
 def Clip_AOI(tiff_file, AOI, AOI_crs="EPSG:4326", output_path=None):
-    ''' This function calculates the clip from a tiff file.
+    ''' This function clips the tiff file according to the AOI.
 
         INPUTS:
         - tiff_file: The path to the input GeoTIFF file.
@@ -457,7 +456,7 @@ def Area_calculation(tiff_file, class_list, SCL_band):
 #------------------------- MASK TIFF -------------------------
 
 def Mask_tiff(tiff_file, class_list, SCL_band, output_path=None):
-    ''' This function calculates the mask from a tiff file and specified classes.
+    ''' This function masks the tiff file according to the specified classes.
 
         INPUTS:
         - tiff_file: The path to the input GeoTIFF file.
