@@ -96,7 +96,7 @@ Section 2 includes:
 - Visualizing results on interactive maps
 
  > [!WARNING]  
-> Since the zip file provided by Copernicus is quite heavy (around 1 GB) it may happen that there isn't enough free space on the disk. Please make sure to have enough free space before running the functions of the library.
+> Since the zip file provided by Copernicus is quite heavy (around 1 GB), it may happen that there isn't enough free space on the disk. Please make sure to have enough free space before running the functions of the library.
 
 ## 6. Testing
 
