@@ -1,5 +1,5 @@
 # ZIPRA - ZIP Raster Analysis
-ZIPRA is a Python library for extracting, processing and analyzing Sentinel-2 L2A satellite images directly from the `.SAFE` zip file provided by Copernicus Dataspace.
+ZIPRA is a Python library for extracting, processing and analyzing Sentinel-2 L2A satellite images directly from the `.SAFE` zip file provided by Copernicus Data Space.
 The library provides tools to:
 
 - Extract specific spectral bands from Sentinel-2 `.SAFE` files
